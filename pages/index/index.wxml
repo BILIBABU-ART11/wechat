@@ -1,0 +1,9 @@
+<view class="index-page page">
+  <loading-state wx:if="{{loading}}" text="正在读取提醒"></loading-state>
+
+  <view wx:elif="{{reminders.length}}" class="article-stack">
+    <article-card wx:for="{{reminders}}" wx:key="id" article="{{item}}" bind:open="openArticle"></article-card>
+  </view>
+
+  <empty-state wx:else title="暂无提醒" desc="当前用户暂无未处理待办"></empty-state>
+</view>

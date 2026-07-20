@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "提醒",
+  "usingComponents": {
+    "article-card": "../../components/article-card/article-card",
+    "loading-state": "../../components/loading-state/loading-state",
+    "empty-state": "../../components/empty-state/empty-state"
+  }
+}

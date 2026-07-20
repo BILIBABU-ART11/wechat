@@ -1,0 +1,13 @@
+<view class="bind-page page">
+  <view class="bind-head">
+    <view class="bind-kicker">身份绑定</view>
+    <view class="bind-title">绑定内部账号</view>
+    <view class="bind-desc">当前微信用户尚未绑定内部身份。绑定后可接收对应人员的待办统计提醒。</view>
+  </view>
+
+  <view class="bind-card card">
+    <view class="field-label">用户ID授权码</view>
+    <input class="input" type="number" value="{{bindValue}}" placeholder="{{placeholder}}" bindinput="handleInput" />
+    <button class="primary-button bind-button" loading="{{loading}}" bindtap="submitBind">确认绑定并进入首页</button>
+  </view>
+</view>

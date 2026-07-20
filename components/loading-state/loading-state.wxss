@@ -1,0 +1,41 @@
+.loading-state {
+  padding: 60rpx 32rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.loading-line {
+  height: 28rpx;
+  border-radius: 6rpx;
+  background: linear-gradient(90deg, #e6edf4 0%, #f7f9fc 46%, #e6edf4 100%);
+  background-size: 240% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.line-a {
+  width: 84%;
+}
+
+.line-b {
+  width: 64%;
+}
+
+.line-c {
+  width: 76%;
+}
+
+.loading-text {
+  color: #708197;
+  font-size: 24rpx;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: -100% 0;
+  }
+}

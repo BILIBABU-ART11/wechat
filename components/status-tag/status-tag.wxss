@@ -1,0 +1,53 @@
+.status-tag {
+  min-width: 96rpx;
+  height: 42rpx;
+  padding: 0 16rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+  line-height: 42rpx;
+}
+
+.status-new,
+.status-evaluating,
+.status-pending {
+  color: #b54708;
+  background: #fff4d8;
+}
+
+.status-materials,
+.status-processing {
+  color: #126d8f;
+  background: #dff3f8;
+}
+
+.status-submit-due {
+  color: #b42318;
+  background: #fff0ec;
+}
+
+.status-submitted,
+.status-opening {
+  color: #334155;
+  background: #e8eef7;
+}
+
+.status-follow-up {
+  color: #7a4f01;
+  background: #fff1bd;
+}
+
+.status-completed,
+.status-done {
+  color: #167447;
+  background: #dcfae6;
+}
+
+.status-abandoned,
+.status-ignored {
+  color: #64748b;
+  background: #eef2f6;
+}

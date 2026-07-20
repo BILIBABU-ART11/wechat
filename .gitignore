@@ -1,0 +1,8 @@
+.env
+server/.env
+project.private.config.json
+node_modules/
+server/node_modules/
+dist/
+*.log
+real-data/

@@ -1,0 +1,9 @@
+{
+  "desc": "院院通待办提醒小程序 sitemap",
+  "rules": [
+    {
+      "action": "allow",
+      "page": "*"
+    }
+  ]
+}

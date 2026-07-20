@@ -1,0 +1,18 @@
+<view class="article-card" bindtap="handleTap">
+  <view class="article-top">
+    <view class="source-line">
+      <text class="category">{{article.category}}</text>
+      <text class="source">{{article.snapshot_date}}</text>
+    </view>
+    <text class="pending-count">{{article.product}}</text>
+  </view>
+  <view class="article-title">{{article.title}}</view>
+  <view class="article-summary">{{article.display_summary}}</view>
+  <view class="article-meta">
+    <view class="company">{{article.company}}</view>
+    <view class="source">{{article.source}}</view>
+  </view>
+  <view class="article-foot">
+    <text class="time">更新时间 {{article.updated_at_text}}</text>
+  </view>
+</view>

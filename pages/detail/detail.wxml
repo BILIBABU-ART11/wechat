@@ -1,0 +1,48 @@
+<view class="detail-page page">
+  <loading-state wx:if="{{loading}}" text="正在读取详情"></loading-state>
+
+  <block wx:elif="{{article}}">
+    <view class="detail-card card">
+      <view class="detail-top">
+        <view class="category">{{article.category}}</view>
+        <score-badge score="{{article.ai_score}}"></score-badge>
+      </view>
+      <view class="detail-title">{{article.title}}</view>
+      <view class="detail-meta">
+        <text>{{article.source}}</text>
+        <text>{{article.publish_time_text}}</text>
+      </view>
+      <view class="detail-tags">
+        <view class="tag">{{article.company}}</view>
+        <view class="tag">{{article.product}}</view>
+      </view>
+    </view>
+
+    <view class="section-card card">
+      <view class="section-title">提醒原因</view>
+      <view class="summary-text important">{{article.reminder_reason}}</view>
+    </view>
+
+    <view class="section-card card">
+      <view class="section-title">待办说明</view>
+      <view class="summary-text">{{article.ai_summary}}</view>
+    </view>
+
+    <view class="section-card card">
+      <view class="field-line"><text class="field-name">当前状态</text><status-tag status="{{article.status}}"></status-tag></view>
+      <view class="field-line"><text class="field-name">快照日期</text><text class="field-value deadline">{{article.deadline_text}}</text></view>
+      <view class="field-line"><text class="field-name">来源系统</text><text class="field-value">{{article.procurement_unit}}</text></view>
+      <view class="field-line"><text class="field-name">人员</text><text class="field-value">{{article.owner}}</text></view>
+      <view class="field-line"><text class="field-name">快照记录</text><text class="field-value">{{article.record_id}}</text></view>
+      <view class="field-line"><text class="field-name">更新时间</text><text class="field-value">{{article.updated_at_text}}</text></view>
+    </view>
+
+    <view class="section-card card">
+      <view class="section-title">来源</view>
+      <view class="source-url">{{article.source_url_text}}</view>
+      <button class="secondary-button copy-button" bindtap="copyLink">复制来源链接</button>
+    </view>
+  </block>
+
+  <empty-state wx:else title="未找到待办" desc="请返回待办列表重新选择"></empty-state>
+</view>

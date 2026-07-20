@@ -1,0 +1,57 @@
+.list-head {
+  padding: 18rpx 4rpx 22rpx;
+}
+
+.list-subtitle {
+  margin-top: 8rpx;
+  color: #708197;
+  font-size: 25rpx;
+}
+
+.filter-block {
+  margin-bottom: 22rpx;
+}
+
+.filter-scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.chip-row {
+  display: inline-flex;
+  gap: 12rpx;
+  padding-bottom: 14rpx;
+}
+
+.filter-chip,
+.score-filter {
+  height: 64rpx;
+  padding: 0 22rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1rpx solid #d8e1eb;
+  border-radius: 8rpx;
+  background: #ffffff;
+  color: #526275;
+  font-size: 25rpx;
+  font-weight: 700;
+}
+
+.filter-chip.active,
+.score-filter.active {
+  border-color: #126d8f;
+  background: #e6f4f1;
+  color: #0f5f78;
+}
+
+.score-row {
+  display: flex;
+  gap: 12rpx;
+}
+
+.article-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}

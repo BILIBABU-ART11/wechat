@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "待办详情",
+  "usingComponents": {
+    "status-tag": "../../components/status-tag/status-tag",
+    "score-badge": "../../components/score-badge/score-badge",
+    "loading-state": "../../components/loading-state/loading-state",
+    "empty-state": "../../components/empty-state/empty-state"
+  }
+}

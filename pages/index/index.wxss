@@ -1,0 +1,10 @@
+.index-page {
+  min-height: 100vh;
+  padding-top: 28rpx;
+}
+
+.article-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}

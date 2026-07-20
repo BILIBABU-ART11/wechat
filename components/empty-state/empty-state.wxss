@@ -1,0 +1,52 @@
+.empty-state {
+  padding: 80rpx 32rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  color: #708197;
+}
+
+.empty-mark {
+  width: 88rpx;
+  height: 88rpx;
+  border: 2rpx solid #cbd7e3;
+  border-radius: 50%;
+  position: relative;
+  background: #f8fafc;
+}
+
+.empty-mark::after {
+  content: "";
+  width: 34rpx;
+  height: 4rpx;
+  background: #9caaba;
+  border-radius: 4rpx;
+  position: absolute;
+  left: 27rpx;
+  top: 42rpx;
+}
+
+.empty-title {
+  margin-top: 24rpx;
+  color: #172033;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.empty-desc {
+  margin-top: 8rpx;
+  font-size: 25rpx;
+  line-height: 1.5;
+}
+
+.empty-action {
+  margin-top: 28rpx;
+  height: 72rpx;
+  padding: 0 28rpx;
+  border-radius: 8rpx;
+  background: #126d8f;
+  color: #ffffff;
+  font-size: 26rpx;
+  font-weight: 700;
+}

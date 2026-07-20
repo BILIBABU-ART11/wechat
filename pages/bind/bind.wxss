@@ -1,0 +1,67 @@
+.bind-head {
+  padding: 32rpx 4rpx 28rpx;
+}
+
+.bind-kicker {
+  color: #126d8f;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.bind-title {
+  margin-top: 12rpx;
+  color: #172033;
+  font-size: 44rpx;
+  font-weight: 850;
+}
+
+.bind-desc {
+  margin-top: 14rpx;
+  color: #64748b;
+  font-size: 27rpx;
+  line-height: 1.6;
+}
+
+.bind-card {
+  padding: 32rpx;
+}
+
+.field-label {
+  color: #334155;
+  font-size: 25rpx;
+  font-weight: 800;
+}
+
+.type-tabs {
+  margin-top: 18rpx;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12rpx;
+}
+
+.type-tab {
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1rpx solid #d8e1eb;
+  border-radius: 8rpx;
+  background: #ffffff;
+  color: #526275;
+  font-size: 25rpx;
+  font-weight: 700;
+}
+
+.type-tab.active {
+  border-color: #126d8f;
+  background: #e6f4f1;
+  color: #0f5f78;
+}
+
+.value-label {
+  margin-top: 34rpx;
+}
+
+.bind-button {
+  margin-top: 36rpx;
+}

@@ -1,0 +1,4 @@
+<view class="score-badge {{className}}">
+  <text class="score-label">提醒</text>
+  <text class="score-value">{{score}}</text>
+</view>

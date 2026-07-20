@@ -1,0 +1,83 @@
+.login-page {
+  min-height: 100vh;
+  padding: 80rpx 32rpx 48rpx;
+  background: #0f172a;
+}
+
+.login-hero {
+  color: #ffffff;
+  padding: 24rpx 4rpx 64rpx;
+}
+
+.brand-kicker {
+  color: #9bd2cc;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.brand-title {
+  margin-top: 18rpx;
+  font-size: 64rpx;
+  font-weight: 850;
+  line-height: 1.08;
+}
+
+.brand-desc {
+  margin-top: 22rpx;
+  max-width: 620rpx;
+  color: #c8d3df;
+  font-size: 28rpx;
+  line-height: 1.65;
+}
+
+.login-panel {
+  padding: 36rpx;
+  border-radius: 8rpx;
+  background: #ffffff;
+  box-shadow: 0 24rpx 48rpx rgba(0, 0, 0, 0.2);
+}
+
+.panel-title {
+  color: #172033;
+  font-size: 34rpx;
+  font-weight: 800;
+}
+
+.panel-desc {
+  margin-top: 12rpx;
+  color: #64748b;
+  font-size: 26rpx;
+  line-height: 1.55;
+}
+
+.login-button {
+  margin-top: 34rpx;
+}
+
+.flow-list {
+  margin-top: 34rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.flow-item {
+  display: flex;
+  align-items: center;
+  color: #526275;
+  font-size: 25rpx;
+}
+
+.flow-index {
+  width: 42rpx;
+  height: 42rpx;
+  margin-right: 16rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e6f4f1;
+  color: #0f766e;
+  font-size: 22rpx;
+  font-weight: 800;
+}

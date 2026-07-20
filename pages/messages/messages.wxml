@@ -1,0 +1,23 @@
+<view class="messages-page page">
+  <view class="message-head">
+    <view>
+      <view class="section-title">提醒中心</view>
+      <view class="message-subtitle">未读 {{unreadCount}} 条，只展示需要知晓的待办提醒</view>
+    </view>
+  </view>
+
+  <loading-state wx:if="{{loading}}" text="正在读取提醒"></loading-state>
+
+  <view wx:elif="{{messages.length}}" class="message-list">
+    <view wx:for="{{messages}}" wx:key="id" class="message-card {{item.read ? '' : 'unread'}}" data-id="{{item.id}}" data-article-id="{{item.article_id}}" bindtap="openMessage">
+      <view class="message-row">
+        <view class="message-type">{{item.title}}</view>
+        <view wx:if="{{!item.read}}" class="unread-dot"></view>
+      </view>
+      <view class="message-content">{{item.content}}</view>
+      <view class="message-time">{{item.created_at_text}}</view>
+    </view>
+  </view>
+
+  <empty-state wx:else title="暂无提醒" desc="待办统计快照更新后会出现在这里"></empty-state>
+</view>

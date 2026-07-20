@@ -1,0 +1,6 @@
+<view class="loading-state">
+  <view class="loading-line line-a"></view>
+  <view class="loading-line line-b"></view>
+  <view class="loading-line line-c"></view>
+  <view class="loading-text">{{text}}</view>
+</view>

@@ -1,0 +1,18 @@
+<view class="login-page">
+  <view class="login-hero">
+    <view class="brand-kicker">招投标进度提醒</view>
+    <view class="brand-title">院院通</view>
+    <view class="brand-desc">同步院院通待办统计快照，用微信端提醒让相关人员及时知晓待处理事项。</view>
+  </view>
+
+  <view class="login-panel">
+    <view class="panel-title">院院通账号登录</view>
+    <view class="panel-desc">微信登录后，系统会校验 openid 与内部用户绑定关系。未绑定账号将进入绑定流程。</view>
+    <button class="primary-button login-button" loading="{{loading}}" bindtap="handleLogin">微信一键登录/登录</button>
+    <view class="flow-list">
+      <view class="flow-item"><text class="flow-index">1</text><text>小程序调用 wx.login 获取 code</text></view>
+      <view class="flow-item"><text class="flow-index">2</text><text>后端换取 openid 并检查绑定关系</text></view>
+      <view class="flow-item"><text class="flow-index">3</text><text>绑定成功后接收待办提醒</text></view>
+    </view>
+  </view>
+</view>

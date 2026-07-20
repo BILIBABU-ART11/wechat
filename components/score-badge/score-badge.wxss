@@ -1,0 +1,39 @@
+.score-badge {
+  height: 44rpx;
+  min-width: 112rpx;
+  padding: 0 14rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6rpx;
+  color: #ffffff;
+  line-height: 44rpx;
+}
+
+.score-label {
+  margin-right: 8rpx;
+  font-size: 20rpx;
+  font-weight: 600;
+  opacity: 0.86;
+}
+
+.score-value {
+  font-size: 26rpx;
+  font-weight: 800;
+}
+
+.score-critical {
+  background: #b42318;
+}
+
+.score-high {
+  background: #c15c12;
+}
+
+.score-medium {
+  background: #126d8f;
+}
+
+.score-low {
+  background: #64748b;
+}

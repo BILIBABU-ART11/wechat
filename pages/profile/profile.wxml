@@ -1,0 +1,19 @@
+<view class="profile-page page">
+  <view class="profile-card card">
+    <view class="avatar">{{avatarText}}</view>
+    <view class="profile-main">
+      <view class="nickname">{{user.nickname || '未登录用户'}}</view>
+      <view class="account">{{user.internal_account || '待绑定内部账号'}}</view>
+    </view>
+  </view>
+
+  <view class="info-card card">
+    <view class="info-row"><text class="info-label">角色</text><text class="info-value">{{roleName || '--'}}</text></view>
+    <view class="info-row"><text class="info-label">绑定状态</text><text class="info-value success">{{user.bound ? '已绑定' : '未绑定'}}</text></view>
+    <view class="info-row"><text class="info-label">订阅消息</text><text class="info-value">{{subscribeState.enabled ? '已开启' : '未开启'}}</text></view>
+    <view class="info-row"><text class="info-label">模式</text><text class="info-value">{{subscribeState.mock ? 'Mock' : 'Real API'}}</text></view>
+  </view>
+
+  <button class="primary-button profile-button" bindtap="subscribeReminder">订阅提醒</button>
+  <button class="danger-button profile-button" bindtap="logout">退出登录</button>
+</view>

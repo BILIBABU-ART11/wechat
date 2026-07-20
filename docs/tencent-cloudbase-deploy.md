@@ -2,28 +2,33 @@
 
 ## 1. 部署后端服务
 
-云托管服务目录选择：
+如果你使用「模板二次开发」生成的 GitHub 仓库和流水线，保持仓库根目录构建即可。本项目根目录已经提供：
+
+```text
+Dockerfile
+container.config.json
+```
+
+这个根目录 Dockerfile 会实际启动 `server/src/index.js`。
+
+如果你在云托管控制台手动新建服务，也可以把云托管服务目录选择为：
 
 ```text
 server
 ```
 
-构建方式选择 Dockerfile。本项目已提供：
+并使用 `server/Dockerfile` 构建。
+
+模板流水线默认容器端口为：
 
 ```text
-server/Dockerfile
+80
 ```
 
-容器监听端口：
+如果手动使用 `server/Dockerfile` 部署，容器端口可使用：
 
 ```text
 3000
-```
-
-启动命令已在 Dockerfile 中设置：
-
-```bash
-npm start
 ```
 
 ## 2. 云托管环境变量
@@ -31,7 +36,8 @@ npm start
 在云托管服务的环境变量中填写：
 
 ```env
-PORT=3000
+# 模板流水线根目录 Dockerfile 使用 80；手动使用 server/Dockerfile 时可填 3000。
+PORT=80
 NODE_ENV=production
 MOCK_MODE=false
 ALLOWED_ORIGINS=*

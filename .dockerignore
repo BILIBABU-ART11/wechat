@@ -1,0 +1,9 @@
+node_modules
+server/node_modules
+.git
+.env
+server/.env
+project.private.config.json
+real-data
+*.log
+server/*.log

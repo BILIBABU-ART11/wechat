@@ -29,7 +29,8 @@ curl http://localhost:3000/health
 后端云托管部署配置已放在：
 
 ```text
-server/Dockerfile
+Dockerfile
+container.config.json
 ```
 
 详细步骤见：

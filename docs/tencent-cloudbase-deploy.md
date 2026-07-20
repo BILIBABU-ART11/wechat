@@ -7,9 +7,11 @@
 ```text
 Dockerfile
 container.config.json
+package.json
+index.js
 ```
 
-这个根目录 Dockerfile 会实际启动 `server/src/index.js`。
+根目录 `Dockerfile` 和 `index.js` 都会实际启动 `server/src/index.js`。因此无论云托管使用 Dockerfile 模式，还是 Express.js 普通 Node 构建模式，都能启动同一个后端。
 
 如果你在云托管控制台手动新建服务，也可以把云托管服务目录选择为：
 

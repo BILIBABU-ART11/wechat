@@ -4,11 +4,12 @@ ENV NODE_ENV=production
 ENV PORT=80
 WORKDIR /app
 
-COPY server/package*.json ./
+COPY package*.json ./
 RUN npm config set registry https://mirrors.cloud.tencent.com/npm/ \
-  && npm ci --omit=dev
+  && npm install --omit=dev
 
-COPY server/src ./src
+COPY index.js ./index.js
+COPY server/src ./server/src
 
 EXPOSE 80
 

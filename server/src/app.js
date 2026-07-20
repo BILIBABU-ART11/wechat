@@ -30,6 +30,30 @@ app.get('/health', (req, res) => {
   });
 });
 
+app.get('/health/egress-ip', async (req, res, next) => {
+  if (!config.enableEgressIpCheck) {
+    res.status(404).json({ code: 404, message: 'endpoint not found', data: null });
+    return;
+  }
+  try {
+    const response = await fetch('https://api.ipify.org?format=json');
+    if (!response.ok) {
+      throw new Error(`egress ip check failed with status ${response.status}`);
+    }
+    const data = await response.json();
+    res.json({
+      code: 0,
+      message: 'ok',
+      data: {
+        egress_ip: data.ip,
+        checked_at: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.use('/api', routes);
 
 app.use((req, res) => {

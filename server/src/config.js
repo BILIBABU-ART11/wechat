@@ -19,6 +19,7 @@ module.exports = {
   mockMode: readBool(process.env.MOCK_MODE, true),
   allowedOrigins: process.env.ALLOWED_ORIGINS || '*',
   tokenSecret: process.env.APP_TOKEN_SECRET || 'mock-secret',
+  enableEgressIpCheck: readBool(process.env.ENABLE_EGRESS_IP_CHECK, false),
   todoApi: {
     baseUrl: process.env.TODO_API_BASE_URL || 'https://accumedical.aiforce.cloud/app/app_4jwag2n0mjq73',
     apiKey: process.env.TODO_API_KEY || '',

@@ -43,6 +43,7 @@ PORT=80
 NODE_ENV=production
 MOCK_MODE=false
 ALLOWED_ORIGINS=*
+ENABLE_EGRESS_IP_CHECK=false
 
 TODO_DATA_SOURCE=api
 TODO_API_BASE_URL=https://accumedical.aiforce.cloud/app/app_4jwag2n0mjq73
@@ -101,6 +102,20 @@ const API_ENV = 'cloud';
 把云托管服务访问院院通 API 的出口 IP 加入院院通白名单。
 
 如果云托管不能提供固定出口 IP，建议使用腾讯云固定公网出口能力，或改用云服务器 CVM/NAT 网关方案。
+
+临时查看当前云托管出口 IP 时，可以在云托管环境变量中设置：
+
+```env
+ENABLE_EGRESS_IP_CHECK=true
+```
+
+重新部署后访问：
+
+```text
+https://你的云托管域名/health/egress-ip
+```
+
+返回的 `egress_ip` 就是当前容器访问公网时使用的出口 IP。拿到后建议把 `ENABLE_EGRESS_IP_CHECK` 改回 `false` 并重新部署。
 
 ## 6. 验证
 

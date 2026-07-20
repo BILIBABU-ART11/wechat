@@ -36,16 +36,55 @@ app.get('/health/egress-ip', async (req, res, next) => {
     return;
   }
   try {
-    const response = await fetch('https://api.ipify.org?format=json');
-    if (!response.ok) {
-      throw new Error(`egress ip check failed with status ${response.status}`);
+    const endpoints = [
+      {
+        url: 'https://myip.ipip.net',
+        parse: (text) => {
+          const match = text.match(/\d{1,3}(?:\.\d{1,3}){3}/);
+          return match && match[0];
+        }
+      },
+      {
+        url: 'https://ifconfig.me/ip',
+        parse: (text) => text.trim()
+      },
+      {
+        url: 'https://api.ipify.org?format=json',
+        parse: (text) => JSON.parse(text).ip
+      }
+    ];
+    const attempts = [];
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(endpoint.url, { headers: { Accept: 'text/plain, application/json' } });
+        const text = await response.text();
+        if (!response.ok) {
+          attempts.push({ url: endpoint.url, status: response.status, body: text.slice(0, 120) });
+          continue;
+        }
+        const ip = endpoint.parse(text);
+        if (ip) {
+          res.json({
+            code: 0,
+            message: 'ok',
+            data: {
+              egress_ip: ip,
+              source: endpoint.url,
+              checked_at: new Date().toISOString()
+            }
+          });
+          return;
+        }
+        attempts.push({ url: endpoint.url, status: response.status, body: text.slice(0, 120) });
+      } catch (error) {
+        attempts.push({ url: endpoint.url, error: error.message });
+      }
     }
-    const data = await response.json();
     res.json({
-      code: 0,
-      message: 'ok',
+      code: 502,
+      message: 'egress ip check failed',
       data: {
-        egress_ip: data.ip,
+        attempts,
         checked_at: new Date().toISOString()
       }
     });

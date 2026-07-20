@@ -30,10 +30,10 @@ const STATUS_VALUES = {
   ignored: 'ignored'
 };
 
-const API_ENV = 'local';
+const API_ENV = 'cloud';
 const API_BASE_URLS = {
   local: 'http://192.168.0.77:3000',
-  cloud: 'https://替换为你的云托管域名'
+  cloud: 'https://express-0kx6-284420-7-1455148284.sh.run.tcloudbase.com'
 };
 
 module.exports = {

@@ -14,11 +14,22 @@ function readList(value) {
   return String(value || '').split(',').map((item) => item.trim()).filter(Boolean);
 }
 
+function readMysqlAddress(value) {
+  const [host, port] = String(value || '').split(':');
+  return {
+    host: host || '',
+    port: Number(port || 3306)
+  };
+}
+
+const mysqlAddress = readMysqlAddress(process.env.MYSQL_ADDRESS);
+
 module.exports = {
   port: Number(process.env.PORT || 3000),
   mockMode: readBool(process.env.MOCK_MODE, true),
   allowedOrigins: process.env.ALLOWED_ORIGINS || '*',
   tokenSecret: process.env.APP_TOKEN_SECRET || 'mock-secret',
+  todoImportToken: process.env.TODO_IMPORT_TOKEN || '',
   enableEgressIpCheck: readBool(process.env.ENABLE_EGRESS_IP_CHECK, true),
   todoApi: {
     baseUrl: process.env.TODO_API_BASE_URL || 'https://accumedical.aiforce.cloud/app/app_4jwag2n0mjq73',
@@ -46,6 +57,13 @@ module.exports = {
     appSecret: process.env.FEISHU_APP_SECRET || '',
     appToken: process.env.FEISHU_APP_TOKEN || '',
     tableId: process.env.FEISHU_TABLE_ID || ''
+  },
+  mysql: {
+    host: mysqlAddress.host,
+    port: mysqlAddress.port,
+    user: process.env.MYSQL_USERNAME || '',
+    password: process.env.MYSQL_PASSWORD || '',
+    database: process.env.MYSQL_DATABASE || 'nodejs_demo'
   },
   subscribeTemplateIds: readList(process.env.SUBSCRIBE_TEMPLATE_IDS)
 };

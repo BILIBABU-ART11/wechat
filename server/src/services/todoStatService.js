@@ -1,5 +1,6 @@
 const fs = require('fs');
 const config = require('../config');
+const importedTodoStore = require('./importedTodoStore');
 
 function createHttpError(status, message, cause) {
   const error = new Error(message);
@@ -179,6 +180,9 @@ function filterArticles(articles, query) {
 async function listSnapshots(query) {
   const params = normalizePageQuery(query || {});
   params.userId = query && (query.userId || query.user_id);
+  if (config.todoApi.dataSource === 'import') {
+    return importedTodoStore.listSnapshots(params);
+  }
   const localResult = readLocalSnapshotFile(params);
   if (localResult) return localResult;
   const payload = await requestJson('/openapi/todo-stat/snapshots', params);
@@ -268,6 +272,12 @@ async function listMessages(query) {
   };
 }
 
+async function importSnapshots(payload) {
+  const source = payload && (payload.data || payload);
+  const items = normalizeItems(source && source.items);
+  return importedTodoStore.saveSnapshots(items, (payload && payload.imported_at) || (payload && payload.meta && payload.meta.fetchedAt));
+}
+
 module.exports = {
   listSnapshots,
   listAllSnapshots,
@@ -275,6 +285,7 @@ module.exports = {
   getArticle,
   getSummary,
   listMessages,
+  importSnapshots,
   snapshotToArticle,
   snapshotToMessage
 };

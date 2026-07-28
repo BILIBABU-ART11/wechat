@@ -99,6 +99,46 @@ cd "C:\path\to\NeuroGaze_MiniProgram"
 3. 默认触发云托管提醒任务。
 4. 在 `todo-sync-logs/` 保存同步日志。
 
+## 日志说明
+
+每次运行都会写入：
+
+```text
+todo-sync-logs/todo-sync-YYYYMMDD-HHmmss.log
+todo-sync-logs/todo-sync-YYYYMMDD-HHmmss.json
+```
+
+同时会覆盖最新日志：
+
+```text
+todo-sync-logs/todo-sync-latest.log
+todo-sync-logs/todo-sync-latest.json
+```
+
+文本日志适合直接查看：
+
+```bash
+tail -n 100 todo-sync-logs/todo-sync-latest.log
+```
+
+结构化 JSON 日志适合排查接口返回、耗时、分页数量和导入结果：
+
+```bash
+cat todo-sync-logs/todo-sync-latest.json
+```
+
+日志会记录：
+
+- 任务开始和结束时间
+- Node 版本、运行目录、进程 ID
+- 院院通 API 每一页请求的 URL、状态码、耗时、返回条数
+- 全量拉取总页数、总条数、总耗时
+- POST 到云托管导入接口的状态码、耗时、导入结果
+- 触发提醒后的发送统计
+- 失败时的错误信息和堆栈
+
+日志不会记录 `TODO_API_KEY` 或 `TODO_IMPORT_TOKEN` 的明文，只记录是否已配置。
+
 ## 注册 Windows 定时任务
 
 以管理员身份打开 PowerShell：

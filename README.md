@@ -5,23 +5,20 @@
 ## 当前正式架构
 
 ```text
-固定 IP 云服务器
+固定 IP 服务器
   -> 每天 09:20 / 17:20 请求院院通 API
   -> POST 到腾讯云托管 /api/todo-stat/import
 
 腾讯云托管 Express 后端
-  -> 保存用户绑定、订阅状态、待办快照、导入日志、发送日志
+  -> 使用 COS JSON 保存当前状态
   -> 小程序按绑定用户 ID 读取自己的待办
   -> 导入成功后触发微信订阅消息
 
-微信小程序
-  -> 微信登录
-  -> 绑定院院通用户 ID
-  -> 订阅提醒
-  -> 查看首页和我的
+COS
+  -> 保存 yyt/yyt-state.json
 ```
 
-## 目录
+## 关键目录
 
 ```text
 server/                       Express.js 后端
@@ -33,7 +30,7 @@ utils/                        小程序工具与常量
 docs/                         部署和同步说明
 ```
 
-## 后端关键接口
+## 后端接口
 
 ```text
 POST /api/auth/wechat-login
@@ -46,34 +43,41 @@ POST /api/subscribe
 GET  /health
 ```
 
-## 正式环境变量
+## 云托管环境变量
 
-云托管正式环境建议：
+正式环境推荐使用 COS JSON，不需要 MySQL：
 
 ```json
 {
+  "PORT": "80",
   "NODE_ENV": "production",
   "MOCK_MODE": "false",
   "TODO_DATA_SOURCE": "import",
+  "STORAGE_MODE": "cos-json",
+  "COS_BUCKET": "7072-prod-d5g6lfndn063b2d5d-1455148284",
+  "COS_REGION": "ap-shanghai",
+  "COS_STATE_KEY": "yyt/yyt-state.json",
   "TODO_IMPORT_TOKEN": "强随机导入密钥",
+  "APP_TOKEN_SECRET": "强随机业务Token密钥",
   "REMINDER_SCHEDULE_ENABLED": "false",
-  "REMINDER_SCHEDULE_TIMES": "09:20,17:20",
-  "REMINDER_TIME_ZONE": "Asia/Shanghai",
   "WECHAT_APP_ID": "wx964c3e4ac820ac37",
-  "WECHAT_APP_SECRET": "微信公众平台获取的AppSecret",
-  "WECHAT_SUBSCRIBE_TEMPLATE_ID": "订阅消息模板ID",
-  "APP_TOKEN_SECRET": "强随机业务Token密钥"
+  "WECHAT_APP_SECRET": "微信后台获取的 AppSecret",
+  "WECHAT_SUBSCRIBE_TEMPLATE_ID": "订阅消息模板ID"
 }
 ```
 
-MySQL 是可选项。没有配置 `MYSQL_ADDRESS` / `MYSQL_USERNAME` / `MYSQL_PASSWORD` 时，后端会使用内存模式：
+如果云托管环境没有自动提供 COS 访问凭据，还需要补充：
 
-- 可以展示最近一次导入的数据。
-- 可以完成当前容器生命周期内的绑定、订阅和提醒。
-- 容器重启、缩容到 0、重新部署后，内存中的绑定、订阅和日志会丢失。
-- 用户本机已保存的登录 token 仍可用于读取自己绑定 ID 下的数据，但微信订阅状态需要用户重新点击订阅。
+```json
+{
+  "COS_SECRET_ID": "腾讯云 SecretId",
+  "COS_SECRET_KEY": "腾讯云 SecretKey"
+}
+```
 
-固定 IP Linux 服务器：
+存储优先级为：`mysql > cos-json > memory`。不配置 MySQL 时会优先使用 COS JSON；COS 也未配置完整时才退回内存模式。
+
+## 固定 IP 服务器变量
 
 ```bash
 export TODO_API_KEY="院院通API_KEY"
@@ -101,14 +105,10 @@ crontab -l
 
 ## 本地测试
 
-后端 smoke test：
-
 ```bash
 cd server
 npm test
 ```
-
-如果本机没有全局 Node，可使用已解压的免安装 Node 执行测试。
 
 ## 部署文档
 

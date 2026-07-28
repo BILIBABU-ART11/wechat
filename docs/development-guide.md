@@ -29,6 +29,32 @@ REMINDER_TIME_ZONE=Asia/Shanghai
 - 同步脚本请求院院通 API 后 POST 到 `/api/todo-stat/import`。
 - 导入成功后由后端触发微信订阅消息发送。
 
+## 推荐存储模式
+
+默认推荐无 MySQL 模式：
+
+```env
+STORAGE_MODE=cos-json
+COS_BUCKET=7072-prod-d5g6lfndn063b2d5d-1455148284
+COS_REGION=ap-shanghai
+COS_STATE_KEY=yyt/yyt-state.json
+```
+
+这会把当前状态保存到 COS 的一个 JSON 文件中，包括：
+
+- 用户绑定关系
+- 订阅状态和剩余可发送次数
+- 最近一次导入的待办快照
+- 最近导入记录
+- 最近提醒发送记录
+
+本地测试 COS JSON 时可以使用文件模拟：
+
+```env
+STORAGE_MODE=cos-json
+COS_STATE_FILE=./tmp/yyt-state.json
+```
+
 ## 必需配置
 
 云托管：
@@ -37,11 +63,9 @@ REMINDER_TIME_ZONE=Asia/Shanghai
 TODO_IMPORT_TOKEN=强随机导入密钥
 APP_TOKEN_SECRET=强随机业务Token密钥
 WECHAT_APP_ID=wx964c3e4ac820ac37
-WECHAT_APP_SECRET=微信公众平台获取的AppSecret
+WECHAT_APP_SECRET=微信公众平台获取的 AppSecret
 WECHAT_SUBSCRIBE_TEMPLATE_ID=订阅消息模板ID
 ```
-
-MySQL 可选。不配置 MySQL 时使用内存模式，适合只展示最近一次导入数据的轻量上线方式。
 
 固定 IP 服务器：
 
@@ -55,6 +79,7 @@ export TODO_IMPORT_TOKEN="与云托管一致"
 
 - 绑定测试：只允许纯数字院院通用户 ID。
 - 隔离测试：不同微信用户只能看到自己绑定 ID 的待办。
-- 导入测试：`/api/todo-stat/import` 返回导入数量。
+- 导入测试：`/api/todo-stat/import` 返回导入数量，COS JSON 更新。
 - 订阅测试：用户授权后 `/api/user/me` 返回订阅状态。
 - 提醒测试：`/api/reminders/status` 返回最近导入和最近发送记录。
+- 重启测试：容器重启后绑定和订阅仍从 COS JSON 恢复。

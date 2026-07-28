@@ -1,4 +1,5 @@
 const config = require('../config');
+const jsonStateStore = require('./jsonStateStore');
 
 let memoryItems = [];
 let memoryImportedAt = '';
@@ -79,6 +80,9 @@ function filterAndPage(items, query) {
 async function saveSnapshots(items, importedAt) {
   const normalized = normalizeItems(items);
   const currentImportedAt = importedAt || new Date().toISOString();
+  if (!hasMysqlConfig() && jsonStateStore.isConfigured()) {
+    return jsonStateStore.saveSnapshots(normalized, currentImportedAt);
+  }
   memoryItems = normalized;
   memoryImportedAt = currentImportedAt;
 
@@ -126,6 +130,9 @@ async function saveSnapshots(items, importedAt) {
 }
 
 async function listSnapshots(query) {
+  if (!hasMysqlConfig() && jsonStateStore.isConfigured()) {
+    return jsonStateStore.listSnapshots(query || {});
+  }
   const currentPool = await ensureTable();
   if (!currentPool) return filterAndPage(memoryItems, query || {});
 

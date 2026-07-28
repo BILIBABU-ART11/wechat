@@ -3,17 +3,17 @@
 ## 架构
 
 ```text
-固定 IP 云服务器
+固定 IP 服务器
   -> 每天 09:20 / 17:20 请求院院通 API
   -> POST 到腾讯云托管导入接口
 
 腾讯云托管
-  -> 保存最近一次待办快照
+  -> 将最新待办、绑定关系、订阅状态、最近日志保存到 COS JSON
   -> 小程序读取导入数据
   -> 导入成功后触发订阅消息提醒
 ```
 
-这样院院通白名单只需要加入固定 IP 云服务器的公网 IP，腾讯云托管不再直接请求院院通 API。
+这样院院通白名单只需要加入固定 IP 服务器的公网 IP，腾讯云托管不再直接请求院院通 API。
 
 ## 云托管环境变量
 
@@ -28,6 +28,11 @@
   "TODO_DATA_SOURCE": "import",
   "TODO_IMPORT_TOKEN": "替换为强随机导入密钥",
 
+  "STORAGE_MODE": "cos-json",
+  "COS_BUCKET": "7072-prod-d5g6lfndn063b2d5d-1455148284",
+  "COS_REGION": "ap-shanghai",
+  "COS_STATE_KEY": "yyt/yyt-state.json",
+
   "REMINDER_SCHEDULE_ENABLED": "false",
   "REMINDER_SCHEDULE_TIMES": "09:20,17:20",
   "REMINDER_TIME_ZONE": "Asia/Shanghai",
@@ -36,7 +41,7 @@
   "REMINDER_SEND_ONLY_PENDING": "true",
 
   "WECHAT_APP_ID": "wx964c3e4ac820ac37",
-  "WECHAT_APP_SECRET": "微信公众平台获取的AppSecret",
+  "WECHAT_APP_SECRET": "微信公众平台获取的 AppSecret",
   "WECHAT_SUBSCRIBE_TEMPLATE_ID": "订阅消息模板ID",
   "WECHAT_SUBSCRIBE_TEMPLATE_PAGE": "pages/index/index",
 
@@ -45,7 +50,14 @@
 }
 ```
 
-MySQL 可选。没有 MySQL 时，云托管使用内存保存最近一次导入数据；容器重启后数据会清空，等待固定 IP 服务器下一次导入即可恢复展示。
+如果 COS 访问鉴权失败，再给云托管补充：
+
+```json
+{
+  "COS_SECRET_ID": "腾讯云 SecretId",
+  "COS_SECRET_KEY": "腾讯云 SecretKey"
+}
+```
 
 ## 固定 IP Linux 服务器环境变量
 
@@ -88,7 +100,7 @@ crontab -l
 20 17 * * * ...
 ```
 
-请确认服务器系统时区为 `Asia/Shanghai`，或已经按北京时间配置。
+请确认服务器系统时区为 `Asia/Shanghai`，或 cron 已按北京时间配置。
 
 ## 日志
 

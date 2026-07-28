@@ -1,16 +1,17 @@
 # Architecture
 
-NeuroGaze is a lightweight tender progress reminder Mini Program. Users view tender project stage, deadline, reminder reason, and in-app reminders. They do not process records inside the Mini Program.
+院院通小程序是一个轻量待办提醒工具。用户登录后绑定自己的院院通用户 ID，只能看到该 ID 下的最近一次待办统计，并可主动订阅微信提醒。
 
 ```text
 WeChat Mini Program
-  -> NeuroGaze backend API
+  -> Tencent CloudBase Express API
+    -> COS JSON state file
     -> WeChat OpenAPI
-    -> Feishu OpenAPI / Bitable
-    -> subscription message sender
-```
 
-The Mini Program never calls Feishu OpenAPI directly and never stores real secrets.
+Fixed IP Server
+  -> YYT OpenAPI
+  -> Tencent CloudBase import API
+```
 
 ## Login And Binding
 
@@ -18,50 +19,62 @@ The Mini Program never calls Feishu OpenAPI directly and never stores real secre
 2. Mini Program sends `code` to `POST /api/auth/wechat-login`.
 3. Backend calls WeChat `code2Session` and receives `openid` plus `session_key`.
 4. Backend never returns `session_key` to the Mini Program.
-5. Backend checks whether `openid` is already bound to an internal user.
-6. If bound, backend returns a business token, user profile, role, and permissions.
-7. If not bound, backend returns `need_bind=true`.
-8. User enters invite code, enterprise email, or phone number.
-9. Backend validates the binding value and binds `openid` to the internal user.
+5. Backend checks whether `openid` is already bound to a YYT user ID.
+6. If bound, backend returns a business token and user profile.
+7. If not bound, backend returns `need_bind=true` and a short-lived bind token.
+8. User enters a numeric YYT user ID.
+9. Backend validates the value and binds `openid` to that ID.
 10. All later requests use `Authorization: Bearer <token>`.
 
-## Feishu Integration
+Only numeric YYT user IDs are accepted. Phone numbers, email addresses, and other binding paths are rejected.
 
-The backend owns all Feishu integration work:
+## Data Sync
 
-- Fetch and cache `tenant_access_token`.
-- Read Feishu Bitable tender project records.
-- Normalize fields into Mini Program-friendly project objects.
-- Sync project stage, deadline, reminder reason, read state, and update time.
-- Handle Feishu API errors, rate limits, retries, and field mapping.
+The Tencent CloudBase backend does not call the YYT API directly in production. A fixed IP server pulls YYT data twice per day and imports the result into CloudBase:
 
-## Feishu Field Mapping Example
+```text
+POST /api/todo-stat/import
+Authorization: Bearer <TODO_IMPORT_TOKEN>
+```
 
-| Internal Field | Feishu Field |
-| --- | --- |
-| `record_id` | `record_id` |
-| `title` | `title` |
-| `source` | `source` |
-| `original_url` | `original_url` |
-| `company` | `company` |
-| `product` | `product` |
-| `category` | `category` |
-| `ai_score` | `ai_score` |
-| `ai_summary` | `ai_summary` |
-| `publish_time` | `publish_time` |
-| `deadline` | `deadline` |
-| `status` | `status` |
-| `owner` | `owner` |
-| `comment` | `comment` |
-| `reminder_reason` | `reminder_reason` |
-| `procurement_unit` | `procurement_unit` |
-| `updated_at` | `updated_at` |
+The import replaces the latest snapshot in COS JSON. The Mini Program always filters snapshots by the logged-in user's bound YYT user ID.
+
+## Storage
+
+Storage priority:
+
+```text
+mysql > cos-json > memory
+```
+
+Current recommended mode:
+
+```env
+STORAGE_MODE=cos-json
+COS_BUCKET=...
+COS_REGION=ap-shanghai
+COS_STATE_KEY=yyt/yyt-state.json
+```
+
+The COS JSON file stores only current operational state:
+
+- User binding records
+- Subscription authorization state
+- Latest todo snapshots
+- Recent import runs
+- Recent reminder send logs
+
+It does not keep long-term history.
 
 ## Reminder Design
 
-There are two reminder channels:
+WeChat reminders use Mini Program subscription messages:
 
-1. In-app reminder center: tender deadlines, stage changes, and new project notices.
-2. WeChat subscription messages: deadline-critical or stage-change reminders that require timely awareness.
+1. User taps the subscribe button in the Mini Program.
+2. Mini Program calls `wx.requestSubscribeMessage`.
+3. Backend saves the accepted template ID and increments `remaining_count`.
+4. After each successful import, backend finds users whose bound YYT ID matches a pending snapshot.
+5. Backend sends a subscription message only when `pendingCount > 0` and `remaining_count > 0`.
+6. On successful send, backend decrements `remaining_count`.
 
-Template IDs must be configured on the backend through environment variables, not hardcoded in frontend code.
+Template IDs and app secrets must be configured on the backend through environment variables, not hardcoded in frontend code.

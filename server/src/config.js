@@ -32,6 +32,27 @@ module.exports = {
   tokenSecret: process.env.APP_TOKEN_SECRET || 'mock-secret',
   todoImportToken: process.env.TODO_IMPORT_TOKEN || '',
   enableEgressIpCheck: readBool(process.env.ENABLE_EGRESS_IP_CHECK, false),
+  storage: {
+    mode: process.env.STORAGE_MODE || ''
+  },
+  cos: {
+    bucket: process.env.COS_BUCKET || '',
+    region: process.env.COS_REGION || '',
+    stateKey: process.env.COS_STATE_KEY || 'yyt/yyt-state.json',
+    stateFile: process.env.COS_STATE_FILE || process.env.JSON_STATE_FILE || '',
+    secretId: process.env.COS_SECRET_ID
+      || process.env.TENCENTCLOUD_SECRETID
+      || process.env.TENCENTCLOUD_SECRET_ID
+      || '',
+    secretKey: process.env.COS_SECRET_KEY
+      || process.env.TENCENTCLOUD_SECRETKEY
+      || process.env.TENCENTCLOUD_SECRET_KEY
+      || '',
+    sessionToken: process.env.COS_SESSION_TOKEN
+      || process.env.TENCENTCLOUD_SESSIONTOKEN
+      || process.env.TENCENTCLOUD_TOKEN
+      || ''
+  },
   todoApi: {
     baseUrl: process.env.TODO_API_BASE_URL || 'https://accumedical.aiforce.cloud/app/app_4jwag2n0mjq73',
     apiKey: process.env.TODO_API_KEY || '',

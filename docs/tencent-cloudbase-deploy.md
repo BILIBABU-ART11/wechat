@@ -4,7 +4,7 @@
 
 本项目是 Express.js 后端，腾讯云托管语言模板选择 **Express.js**。
 
-仓库根目录已提供：
+仓库根目录已经提供：
 
 ```text
 Dockerfile
@@ -13,15 +13,15 @@ package.json
 index.js
 ```
 
-根目录启动会实际加载 `server/src/index.js`。模板流水线默认容器端口使用：
+根目录启动时会加载 `server/src/index.js`。云托管端口建议保持：
 
 ```text
 80
 ```
 
-## 云托管环境变量
+## 推荐环境变量
 
-正式环境建议使用下面配置。密钥不要提交到 GitHub，只放在云托管环境变量里。
+正式环境默认使用 COS JSON 保存状态，不需要配置 MySQL。
 
 ```json
 {
@@ -33,9 +33,11 @@ index.js
 
   "TODO_DATA_SOURCE": "import",
   "TODO_IMPORT_TOKEN": "替换为强随机导入密钥",
-  "TODO_API_BASE_URL": "https://accumedical.aiforce.cloud/app/app_4jwag2n0mjq73",
-  "TODO_API_KEY": "",
-  "TODO_API_TIMEOUT_MS": "20000",
+
+  "STORAGE_MODE": "cos-json",
+  "COS_BUCKET": "7072-prod-d5g6lfndn063b2d5d-1455148284",
+  "COS_REGION": "ap-shanghai",
+  "COS_STATE_KEY": "yyt/yyt-state.json",
 
   "REMINDER_SCHEDULE_ENABLED": "false",
   "REMINDER_SCHEDULE_TIMES": "09:20,17:20",
@@ -45,7 +47,7 @@ index.js
   "REMINDER_SEND_ONLY_PENDING": "true",
 
   "WECHAT_APP_ID": "wx964c3e4ac820ac37",
-  "WECHAT_APP_SECRET": "微信公众平台获取的AppSecret",
+  "WECHAT_APP_SECRET": "微信公众平台获取的 AppSecret",
   "WECHAT_SUBSCRIBE_TEMPLATE_ID": "订阅消息模板ID",
   "WECHAT_SUBSCRIBE_TEMPLATE_PAGE": "pages/index/index",
 
@@ -57,12 +59,29 @@ index.js
 说明：
 
 - `TODO_DATA_SOURCE=import` 表示云托管只读取固定 IP 服务器导入的数据。
+- `STORAGE_MODE=cos-json` 表示用户绑定、订阅状态、最新待办和最近日志保存到 COS JSON。
 - `REMINDER_SCHEDULE_ENABLED=false` 表示云托管不自己定时拉取，避免和固定 IP 服务器重复触发。
 - 固定 IP 服务器导入数据时会带 `trigger_reminders=true`，导入成功后自动触发提醒发送。
 - `TODO_IMPORT_TOKEN` 必须和固定 IP 服务器脚本中的值一致。
-- MySQL 可选。没有 MySQL 时使用内存模式，只保留当前容器生命周期内的数据、订阅和日志。
 
-如后续需要持久化，再补充：
+## COS 权限
+
+如果云托管运行环境已经能访问当前 `COS_BUCKET`，只需要上面的 `COS_BUCKET`、`COS_REGION`、`COS_STATE_KEY`。
+
+如果启动后日志提示 COS 鉴权失败，再补充下面两个变量：
+
+```json
+{
+  "COS_SECRET_ID": "腾讯云 SecretId",
+  "COS_SECRET_KEY": "腾讯云 SecretKey"
+}
+```
+
+这两个值只能放在云托管环境变量里，不要提交到 GitHub。
+
+## MySQL 可选
+
+MySQL 不是当前推荐必需项。只有后续需要长期历史、报表、多人高频写入时再配置：
 
 ```json
 {
@@ -72,6 +91,8 @@ index.js
   "MYSQL_DATABASE": "nodejs_demo"
 }
 ```
+
+存储优先级为：`mysql > cos-json > memory`。
 
 ## 小程序域名配置
 
@@ -115,4 +136,4 @@ GET /api/reminders/status
 }
 ```
 
-排查完请改回 `false` 并重新部署。
+排查结束后改回 `false` 并重新部署。

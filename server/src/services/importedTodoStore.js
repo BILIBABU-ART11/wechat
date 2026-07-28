@@ -1,5 +1,6 @@
 const config = require('../config');
 const jsonStateStore = require('./jsonStateStore');
+const remoteStateStore = require('./remoteStateStore');
 
 let memoryItems = [];
 let memoryImportedAt = '';
@@ -36,6 +37,13 @@ function getPool() {
     charset: 'utf8mb4'
   });
   return pool;
+}
+
+function activeStateStore() {
+  if (hasMysqlConfig()) return null;
+  if (remoteStateStore.isConfigured()) return remoteStateStore;
+  if (jsonStateStore.isConfigured()) return jsonStateStore;
+  return null;
 }
 
 async function ensureTable() {
@@ -80,8 +88,9 @@ function filterAndPage(items, query) {
 async function saveSnapshots(items, importedAt) {
   const normalized = normalizeItems(items);
   const currentImportedAt = importedAt || new Date().toISOString();
-  if (!hasMysqlConfig() && jsonStateStore.isConfigured()) {
-    return jsonStateStore.saveSnapshots(normalized, currentImportedAt);
+  const stateStore = activeStateStore();
+  if (stateStore) {
+    return stateStore.saveSnapshots(normalized, currentImportedAt);
   }
   memoryItems = normalized;
   memoryImportedAt = currentImportedAt;
@@ -130,8 +139,9 @@ async function saveSnapshots(items, importedAt) {
 }
 
 async function listSnapshots(query) {
-  if (!hasMysqlConfig() && jsonStateStore.isConfigured()) {
-    return jsonStateStore.listSnapshots(query || {});
+  const stateStore = activeStateStore();
+  if (stateStore) {
+    return stateStore.listSnapshots(query || {});
   }
   const currentPool = await ensureTable();
   if (!currentPool) return filterAndPage(memoryItems, query || {});

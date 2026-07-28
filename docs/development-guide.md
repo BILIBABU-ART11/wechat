@@ -31,16 +31,15 @@ REMINDER_TIME_ZONE=Asia/Shanghai
 
 ## 推荐存储模式
 
-默认推荐无 MySQL 模式：
+默认推荐无 MySQL、无 COS 模式：
 
 ```env
-STORAGE_MODE=cos-json
-COS_BUCKET=7072-prod-d5g6lfndn063b2d5d-1455148284
-COS_REGION=ap-shanghai
-COS_STATE_KEY=yyt/yyt-state.json
+STORAGE_MODE=remote-json
+REMOTE_STATE_API_BASE_URL=https://你的Linux状态服务域名
+REMOTE_STATE_TOKEN=强随机远程状态密钥
 ```
 
-这会把当前状态保存到 COS 的一个 JSON 文件中，包括：
+这会把当前状态保存到 Linux 服务器的 JSON 文件中，包括：
 
 - 用户绑定关系
 - 订阅状态和剩余可发送次数
@@ -48,11 +47,12 @@ COS_STATE_KEY=yyt/yyt-state.json
 - 最近导入记录
 - 最近提醒发送记录
 
-本地测试 COS JSON 时可以使用文件模拟：
+Linux 状态服务本地启动：
 
-```env
-STORAGE_MODE=cos-json
-COS_STATE_FILE=./tmp/yyt-state.json
+```bash
+export REMOTE_STATE_TOKEN="强随机远程状态密钥"
+export REMOTE_STATE_FILE="./tmp/yyt-state.json"
+node scripts/remote-state-server.js
 ```
 
 ## 必需配置
@@ -73,13 +73,15 @@ WECHAT_SUBSCRIBE_TEMPLATE_ID=订阅消息模板ID
 export TODO_API_KEY="院院通API_KEY"
 export CLOUD_API_BASE_URL="云托管HTTPS域名"
 export TODO_IMPORT_TOKEN="与云托管一致"
+export REMOTE_STATE_API_BASE_URL="Linux状态服务HTTPS域名"
+export REMOTE_STATE_TOKEN="与云托管一致"
 ```
 
 ## 验证
 
 - 绑定测试：只允许纯数字院院通用户 ID。
 - 隔离测试：不同微信用户只能看到自己绑定 ID 的待办。
-- 导入测试：`/api/todo-stat/import` 返回导入数量，COS JSON 更新。
+- 导入测试：`/api/todo-stat/import` 返回导入数量，Linux JSON 更新。
 - 订阅测试：用户授权后 `/api/user/me` 返回订阅状态。
 - 提醒测试：`/api/reminders/status` 返回最近导入和最近发送记录。
-- 重启测试：容器重启后绑定和订阅仍从 COS JSON 恢复。
+- 重启测试：容器重启后绑定和订阅仍从 Linux JSON 恢复。

@@ -14,10 +14,10 @@ ENABLE_EGRESS_IP_CHECK=false
 TODO_DATA_SOURCE=import
 TODO_IMPORT_TOKEN=replace-with-import-token
 
-STORAGE_MODE=cos-json
-COS_BUCKET=7072-prod-d5g6lfndn063b2d5d-1455148284
-COS_REGION=ap-shanghai
-COS_STATE_KEY=yyt/yyt-state.json
+STORAGE_MODE=remote-json
+REMOTE_STATE_API_BASE_URL=https://your-linux-state-domain
+REMOTE_STATE_TOKEN=replace-with-remote-state-token
+REMOTE_STATE_TIMEOUT_MS=10000
 
 REMINDER_SCHEDULE_ENABLED=false
 REMINDER_SCHEDULE_TIMES=09:20,17:20
@@ -29,11 +29,13 @@ WECHAT_SUBSCRIBE_TEMPLATE_ID=replace-with-template-id
 APP_TOKEN_SECRET=replace-with-a-strong-secret
 ```
 
-If COS access fails because the runtime has no bucket credentials, add:
+Linux remote state server:
 
 ```bash
-COS_SECRET_ID=replace-with-tencent-secret-id
-COS_SECRET_KEY=replace-with-tencent-secret-key
+export REMOTE_STATE_TOKEN="same-as-cloudbase"
+export REMOTE_STATE_FILE="/opt/yyt-state/yyt-state.json"
+export REMOTE_STATE_PORT=3100
+node scripts/remote-state-server.js
 ```
 
 ## Fixed IP Server
@@ -42,6 +44,8 @@ COS_SECRET_KEY=replace-with-tencent-secret-key
 export TODO_API_KEY="replace-with-yyt-api-key"
 export CLOUD_API_BASE_URL="https://your-cloudbase-domain"
 export TODO_IMPORT_TOKEN="same-as-cloudbase"
+export REMOTE_STATE_API_BASE_URL="https://your-linux-state-domain"
+export REMOTE_STATE_TOKEN="same-as-cloudbase-remote-state-token"
 export TODO_SYNC_LOG_DIR="/var/log/yyt-todo-sync"
 ```
 

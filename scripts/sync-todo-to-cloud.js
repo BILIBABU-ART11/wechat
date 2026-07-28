@@ -222,6 +222,55 @@ async function importToCloud(config, todoResult, startedAt, logger) {
   return { payload, result };
 }
 
+async function syncToRemoteState(config, todoResult, startedAt, logger) {
+  if (!config.remoteStateBaseUrl) {
+    logger.info('Remote state sync skipped', {
+      reason: 'REMOTE_STATE_API_BASE_URL is not configured'
+    });
+    return null;
+  }
+  requireValue(config.remoteStateToken, 'remote-state-token');
+  const stateUrl = `${config.remoteStateBaseUrl.replace(/\/+$/, '')}/todo/snapshots`;
+  const payload = {
+    meta: {
+      source: 'todo-stat-snapshots',
+      todoBaseUrl: config.todoBaseUrl,
+      snapshotDate: config.snapshotDate,
+      startedAt,
+      fetchedAt: nowIso(),
+      pageSize: config.pageSize,
+      total: todoResult.total,
+      itemCount: todoResult.items.length
+    },
+    data: {
+      items: todoResult.items,
+      total: todoResult.total,
+      page: 1,
+      pageSize: config.pageSize
+    }
+  };
+
+  logger.info('Remote state sync started', {
+    url: stateUrl,
+    itemCount: todoResult.items.length
+  });
+
+  const result = await fetchJson(stateUrl, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'content-type': 'application/json',
+      Authorization: `Bearer ${config.remoteStateToken}`
+    },
+    body: JSON.stringify(payload)
+  }, 'Remote state API', logger);
+
+  logger.info('Remote state sync completed', {
+    summary: summarizePayload(result)
+  });
+  return result;
+}
+
 function writeJsonLog(config, logger, data) {
   fs.mkdirSync(config.logDir, { recursive: true });
   const logPath = path.join(config.logDir, `todo-sync-${timestampForFile()}.json`);
@@ -247,6 +296,8 @@ function readConfig(projectRoot) {
     snapshotDate: readArg('snapshot-date', process.env.SNAPSHOT_DATE || ''),
     pageSize: Math.min(100, Math.max(1, Number(readArg('page-size', process.env.PAGE_SIZE || 100)))),
     triggerReminders: readBool(readArg('trigger-reminders', process.env.TRIGGER_REMINDERS), true),
+    remoteStateBaseUrl: readArg('remote-state-base-url', process.env.REMOTE_STATE_API_BASE_URL || ''),
+    remoteStateToken: readArg('remote-state-token', process.env.REMOTE_STATE_TOKEN || ''),
     logDir: readArg('log-dir', process.env.TODO_SYNC_LOG_DIR || path.join(projectRoot, 'todo-sync-logs'))
   };
 }
@@ -268,8 +319,10 @@ async function run() {
       snapshotDate: config.snapshotDate || null,
       pageSize: config.pageSize,
       triggerReminders: config.triggerReminders,
+      remoteStateBaseUrl: config.remoteStateBaseUrl || null,
       hasTodoApiKey: Boolean(config.todoApiKey),
       hasImportToken: Boolean(config.importToken),
+      hasRemoteStateToken: Boolean(config.remoteStateToken),
       logDir: config.logDir
     });
 
@@ -278,6 +331,7 @@ async function run() {
     requireValue(config.importToken, 'import-token');
 
     const todoResult = await fetchAllTodoSnapshots(config, logger);
+    const remoteStateResult = await syncToRemoteState(config, todoResult, startedAt, logger);
     const importResult = await importToCloud(config, todoResult, startedAt, logger);
     const finishedAt = nowIso();
     const jsonLogPath = writeJsonLog(config, logger, {
@@ -289,6 +343,7 @@ async function run() {
         total: todoResult.total,
         itemCount: todoResult.items.length
       },
+      remoteState: remoteStateResult,
       cloud: importResult.result
     });
 
@@ -303,6 +358,7 @@ async function run() {
       ok: true,
       fetched: todoResult.items.length,
       total: todoResult.total,
+      remoteState: remoteStateResult,
       cloud: importResult.result,
       jsonLogPath,
       textLogPath: logger.textLogPath

@@ -21,7 +21,7 @@ index.js
 
 ## 推荐环境变量
 
-正式环境默认使用 COS JSON 保存状态，不需要配置 MySQL。
+正式环境默认使用 Linux `remote-json` 保存状态，不需要配置 MySQL 或 COS。
 
 ```json
 {
@@ -34,10 +34,10 @@ index.js
   "TODO_DATA_SOURCE": "import",
   "TODO_IMPORT_TOKEN": "替换为强随机导入密钥",
 
-  "STORAGE_MODE": "cos-json",
-  "COS_BUCKET": "7072-prod-d5g6lfndn063b2d5d-1455148284",
-  "COS_REGION": "ap-shanghai",
-  "COS_STATE_KEY": "yyt/yyt-state.json",
+  "STORAGE_MODE": "remote-json",
+  "REMOTE_STATE_API_BASE_URL": "https://你的Linux状态服务域名",
+  "REMOTE_STATE_TOKEN": "替换为强随机远程状态密钥",
+  "REMOTE_STATE_TIMEOUT_MS": "10000",
 
   "REMINDER_SCHEDULE_ENABLED": "false",
   "REMINDER_SCHEDULE_TIMES": "09:20,17:20",
@@ -59,25 +59,41 @@ index.js
 说明：
 
 - `TODO_DATA_SOURCE=import` 表示云托管只读取固定 IP 服务器导入的数据。
-- `STORAGE_MODE=cos-json` 表示用户绑定、订阅状态、最新待办和最近日志保存到 COS JSON。
+- `STORAGE_MODE=remote-json` 表示用户绑定、订阅状态、最新待办和最近日志保存到 Linux JSON 状态服务。
 - `REMINDER_SCHEDULE_ENABLED=false` 表示云托管不自己定时拉取，避免和固定 IP 服务器重复触发。
 - 固定 IP 服务器导入数据时会带 `trigger_reminders=true`，导入成功后自动触发提醒发送。
 - `TODO_IMPORT_TOKEN` 必须和固定 IP 服务器脚本中的值一致。
 
-## COS 权限
+## Linux 状态服务
 
-如果云托管运行环境已经能访问当前 `COS_BUCKET`，只需要上面的 `COS_BUCKET`、`COS_REGION`、`COS_STATE_KEY`。
+Linux 服务器需要常驻运行：
 
-如果启动后日志提示 COS 鉴权失败，再补充下面两个变量：
+```bash
+cd /path/to/NeuroGaze_MiniProgram
+export REMOTE_STATE_TOKEN="与云托管 REMOTE_STATE_TOKEN 一致"
+export REMOTE_STATE_FILE="/opt/yyt-state/yyt-state.json"
+export REMOTE_STATE_PORT=3100
+node scripts/remote-state-server.js
+```
+
+建议在 Linux 上用 Nginx 反向代理到 `127.0.0.1:3100` 并配置 HTTPS。云托管只需要能访问 `REMOTE_STATE_API_BASE_URL`。
+
+## COS 可选备选
+
+如果后续不想让 Linux 服务器承担状态服务，也可以切回 COS JSON：
 
 ```json
 {
+  "STORAGE_MODE": "cos-json",
+  "COS_BUCKET": "你的COS_BUCKET",
+  "COS_REGION": "ap-shanghai",
+  "COS_STATE_KEY": "yyt/yyt-state.json",
   "COS_SECRET_ID": "腾讯云 SecretId",
   "COS_SECRET_KEY": "腾讯云 SecretKey"
 }
 ```
 
-这两个值只能放在云托管环境变量里，不要提交到 GitHub。
+密钥只能放在云托管环境变量里，不要提交到 GitHub。
 
 ## MySQL 可选
 
@@ -92,7 +108,7 @@ MySQL 不是当前推荐必需项。只有后续需要长期历史、报表、�
 }
 ```
 
-存储优先级为：`mysql > cos-json > memory`。
+存储优先级为：`mysql > remote-json > cos-json > memory`。
 
 ## 小程序域名配置
 

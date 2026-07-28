@@ -1,5 +1,6 @@
 const database = require('./database');
 const jsonStateStore = require('./jsonStateStore');
+const remoteStateStore = require('./remoteStateStore');
 
 let tablesReady = false;
 const memory = {
@@ -16,11 +17,22 @@ function createHttpError(status, message) {
 }
 
 function usingMemory() {
-  return !database.hasMysqlConfig() && !jsonStateStore.isConfigured();
+  return !database.hasMysqlConfig() && !activeStateStore();
 }
 
 function usingJsonState() {
   return !database.hasMysqlConfig() && jsonStateStore.isConfigured();
+}
+
+function usingRemoteState() {
+  return !database.hasMysqlConfig() && remoteStateStore.isConfigured();
+}
+
+function activeStateStore() {
+  if (database.hasMysqlConfig()) return null;
+  if (remoteStateStore.isConfigured()) return remoteStateStore;
+  if (jsonStateStore.isConfigured()) return jsonStateStore;
+  return null;
 }
 
 function toMysqlDate(value) {
@@ -155,7 +167,8 @@ async function ensureTables() {
 }
 
 async function findUserByOpenid(openid) {
-  if (usingJsonState()) return jsonStateStore.findUserByOpenid(openid);
+  const stateStore = activeStateStore();
+  if (stateStore) return stateStore.findUserByOpenid(openid);
   if (usingMemory()) {
     return memory.users.find((user) => user.openid === openid) || null;
   }
@@ -165,7 +178,8 @@ async function findUserByOpenid(openid) {
 }
 
 async function findUserById(id) {
-  if (usingJsonState()) return jsonStateStore.findUserById(id);
+  const stateStore = activeStateStore();
+  if (stateStore) return stateStore.findUserById(id);
   if (usingMemory()) {
     return memory.users.find((user) => user.id === id) || null;
   }
@@ -179,7 +193,8 @@ async function bindUser(openid, internalAccount) {
   if (!/^\d{6,}$/.test(account)) {
     throw createHttpError(422, '只能使用有效用户ID授权码绑定');
   }
-  if (usingJsonState()) return jsonStateStore.bindUser(openid, account);
+  const stateStore = activeStateStore();
+  if (stateStore) return stateStore.bindUser(openid, account);
   const userId = `u_${account}`;
   if (usingMemory()) {
     const claimed = memory.users.find((user) => user.internal_account === account && user.openid !== openid);
@@ -231,7 +246,8 @@ async function bindUser(openid, internalAccount) {
 }
 
 async function saveSubscription(userId, payload) {
-  if (usingJsonState()) return jsonStateStore.saveSubscription(userId, payload);
+  const stateStore = activeStateStore();
+  if (stateStore) return stateStore.saveSubscription(userId, payload);
   const accepted = Boolean(payload.accepted);
   const templateIds = Array.isArray(payload.template_ids) ? payload.template_ids : [];
   const raw = payload.raw || payload.error || null;
@@ -280,7 +296,8 @@ async function saveSubscription(userId, payload) {
 }
 
 async function getSubscription(userId) {
-  if (usingJsonState()) return jsonStateStore.getSubscription(userId);
+  const stateStore = activeStateStore();
+  if (stateStore) return stateStore.getSubscription(userId);
   if (usingMemory()) {
     return memory.subscriptions[userId] || {
       enabled: false,
@@ -296,7 +313,8 @@ async function getSubscription(userId) {
 }
 
 async function listReminderRecipients() {
-  if (usingJsonState()) return jsonStateStore.listReminderRecipients();
+  const stateStore = activeStateStore();
+  if (stateStore) return stateStore.listReminderRecipients();
   if (usingMemory()) {
     return memory.users
       .map((user) => ({ user, subscription: memory.subscriptions[user.id] || null }))
@@ -323,7 +341,8 @@ async function listReminderRecipients() {
 }
 
 async function consumeSubscription(userId) {
-  if (usingJsonState()) return jsonStateStore.consumeSubscription(userId);
+  const stateStore = activeStateStore();
+  if (stateStore) return stateStore.consumeSubscription(userId);
   if (usingMemory()) {
     const current = memory.subscriptions[userId];
     if (!current) return;
@@ -344,7 +363,8 @@ async function consumeSubscription(userId) {
 }
 
 async function recordImportRun(payload) {
-  if (usingJsonState()) return jsonStateStore.recordImportRun(payload);
+  const stateStore = activeStateStore();
+  if (stateStore) return stateStore.recordImportRun(payload);
   const record = {
     status: payload.status || 'success',
     source: payload.source || 'todo-stat-snapshots',
@@ -380,7 +400,8 @@ async function recordImportRun(payload) {
 }
 
 async function getLastImportRun() {
-  if (usingJsonState()) return jsonStateStore.getLastImportRun();
+  const stateStore = activeStateStore();
+  if (stateStore) return stateStore.getLastImportRun();
   if (usingMemory()) return memory.importRuns[0] || null;
   const pool = await ensureTables();
   const [rows] = await pool.query('SELECT * FROM yyt_import_runs ORDER BY id DESC LIMIT 1');
@@ -398,7 +419,8 @@ async function getLastImportRun() {
 }
 
 async function recordReminderSend(payload) {
-  if (usingJsonState()) return jsonStateStore.recordReminderSend(payload);
+  const stateStore = activeStateStore();
+  if (stateStore) return stateStore.recordReminderSend(payload);
   const record = {
     user_id: payload.user_id,
     openid: payload.openid,
@@ -437,7 +459,8 @@ async function recordReminderSend(payload) {
 }
 
 async function getLastReminderSend(userId) {
-  if (usingJsonState()) return jsonStateStore.getLastReminderSend(userId);
+  const stateStore = activeStateStore();
+  if (stateStore) return stateStore.getLastReminderSend(userId);
   if (usingMemory()) {
     return memory.sendLogs.find((item) => !userId || item.user_id === userId) || null;
   }
@@ -481,5 +504,6 @@ module.exports = {
   getLastReminderSend,
   usingMemory,
   usingJsonState,
+  usingRemoteState,
   createUser
 };

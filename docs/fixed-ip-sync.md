@@ -8,9 +8,12 @@
   -> POST 到腾讯云托管导入接口
 
 腾讯云托管
-  -> 将最新待办、绑定关系、订阅状态、最近日志保存到 COS JSON
+  -> 通过 remote-json 读写 Linux 状态服务
   -> 小程序读取导入数据
   -> 导入成功后触发订阅消息提醒
+
+Linux 状态服务
+  -> 保存 /opt/yyt-state/yyt-state.json
 ```
 
 这样院院通白名单只需要加入固定 IP 服务器的公网 IP，腾讯云托管不再直接请求院院通 API。
@@ -28,10 +31,10 @@
   "TODO_DATA_SOURCE": "import",
   "TODO_IMPORT_TOKEN": "替换为强随机导入密钥",
 
-  "STORAGE_MODE": "cos-json",
-  "COS_BUCKET": "7072-prod-d5g6lfndn063b2d5d-1455148284",
-  "COS_REGION": "ap-shanghai",
-  "COS_STATE_KEY": "yyt/yyt-state.json",
+  "STORAGE_MODE": "remote-json",
+  "REMOTE_STATE_API_BASE_URL": "https://你的Linux状态服务域名",
+  "REMOTE_STATE_TOKEN": "替换为强随机远程状态密钥",
+  "REMOTE_STATE_TIMEOUT_MS": "10000",
 
   "REMINDER_SCHEDULE_ENABLED": "false",
   "REMINDER_SCHEDULE_TIMES": "09:20,17:20",
@@ -50,14 +53,17 @@
 }
 ```
 
-如果 COS 访问鉴权失败，再给云托管补充：
+Linux 状态服务启动：
 
-```json
-{
-  "COS_SECRET_ID": "腾讯云 SecretId",
-  "COS_SECRET_KEY": "腾讯云 SecretKey"
-}
+```bash
+cd /path/to/NeuroGaze_MiniProgram
+export REMOTE_STATE_TOKEN="与云托管 REMOTE_STATE_TOKEN 一致"
+export REMOTE_STATE_FILE="/opt/yyt-state/yyt-state.json"
+export REMOTE_STATE_PORT=3100
+node scripts/remote-state-server.js
 ```
+
+也可以参考 `scripts/yyt-remote-state.service.example` 配置 systemd 常驻运行。
 
 ## 固定 IP Linux 服务器环境变量
 
@@ -65,6 +71,8 @@
 export TODO_API_KEY="院院通API_KEY"
 export CLOUD_API_BASE_URL="https://express-0kx6-284420-7-1455148284.sh.run.tcloudbase.com"
 export TODO_IMPORT_TOKEN="与云托管TODO_IMPORT_TOKEN一致"
+export REMOTE_STATE_API_BASE_URL="https://你的Linux状态服务域名"
+export REMOTE_STATE_TOKEN="与云托管REMOTE_STATE_TOKEN一致"
 export TODO_SYNC_LOG_DIR="/var/log/yyt-todo-sync"
 ```
 
@@ -78,9 +86,10 @@ node scripts/sync-todo-to-cloud.js
 脚本会：
 
 1. 分页拉取院院通 `/openapi/todo-stat/snapshots`。
-2. POST 到云托管 `/api/todo-stat/import`。
-3. 默认携带 `trigger_reminders=true`，导入后触发提醒。
-4. 写入详细日志。
+2. 如果配置了 `REMOTE_STATE_API_BASE_URL`，先 POST 到 Linux 状态服务 `/todo/snapshots`。
+3. POST 到云托管 `/api/todo-stat/import`。
+4. 默认携带 `trigger_reminders=true`，导入后触发提醒。
+5. 写入详细日志。
 
 ## 注册 Linux cron
 

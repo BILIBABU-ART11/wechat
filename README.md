@@ -10,12 +10,12 @@
   -> POST 到腾讯云托管 /api/todo-stat/import
 
 腾讯云托管 Express 后端
-  -> 使用 COS JSON 保存当前状态
+  -> 通过 remote-json 读写 Linux 状态服务
   -> 小程序按绑定用户 ID 读取自己的待办
   -> 导入成功后触发微信订阅消息
 
-COS
-  -> 保存 yyt/yyt-state.json
+固定 IP Linux 状态服务
+  -> 保存 /opt/yyt-state/yyt-state.json
 ```
 
 ## 关键目录
@@ -23,6 +23,7 @@ COS
 ```text
 server/                       Express.js 后端
 scripts/sync-todo-to-cloud.js 固定 IP 服务器同步脚本
+scripts/remote-state-server.js Linux JSON 状态服务
 scripts/register-todo-sync-cron.sh Linux cron 注册脚本
 pages/                        小程序页面
 services/                     小程序请求与认证服务
@@ -45,7 +46,7 @@ GET  /health
 
 ## 云托管环境变量
 
-正式环境推荐使用 COS JSON，不需要 MySQL：
+正式环境推荐使用 Linux `remote-json`，不需要 MySQL，也不需要 COS：
 
 ```json
 {
@@ -53,10 +54,9 @@ GET  /health
   "NODE_ENV": "production",
   "MOCK_MODE": "false",
   "TODO_DATA_SOURCE": "import",
-  "STORAGE_MODE": "cos-json",
-  "COS_BUCKET": "7072-prod-d5g6lfndn063b2d5d-1455148284",
-  "COS_REGION": "ap-shanghai",
-  "COS_STATE_KEY": "yyt/yyt-state.json",
+  "STORAGE_MODE": "remote-json",
+  "REMOTE_STATE_API_BASE_URL": "https://你的Linux状态服务域名",
+  "REMOTE_STATE_TOKEN": "强随机远程状态密钥",
   "TODO_IMPORT_TOKEN": "强随机导入密钥",
   "APP_TOKEN_SECRET": "强随机业务Token密钥",
   "REMINDER_SCHEDULE_ENABLED": "false",
@@ -66,16 +66,16 @@ GET  /health
 }
 ```
 
-如果云托管环境没有自动提供 COS 访问凭据，还需要补充：
+Linux 状态服务需要配置：
 
-```json
-{
-  "COS_SECRET_ID": "腾讯云 SecretId",
-  "COS_SECRET_KEY": "腾讯云 SecretKey"
-}
+```bash
+export REMOTE_STATE_TOKEN="与云托管 REMOTE_STATE_TOKEN 一致"
+export REMOTE_STATE_FILE="/opt/yyt-state/yyt-state.json"
+export REMOTE_STATE_PORT=3100
+node scripts/remote-state-server.js
 ```
 
-存储优先级为：`mysql > cos-json > memory`。不配置 MySQL 时会优先使用 COS JSON；COS 也未配置完整时才退回内存模式。
+存储优先级为：`mysql > remote-json > cos-json > memory`。不配置 MySQL 时会优先使用远程 JSON；没有远程 JSON 时仍可使用 COS JSON；都没有配置时才退回内存模式。
 
 ## 固定 IP 服务器变量
 
@@ -83,6 +83,8 @@ GET  /health
 export TODO_API_KEY="院院通API_KEY"
 export CLOUD_API_BASE_URL="https://express-0kx6-284420-7-1455148284.sh.run.tcloudbase.com"
 export TODO_IMPORT_TOKEN="与云托管一致"
+export REMOTE_STATE_API_BASE_URL="https://你的Linux状态服务域名"
+export REMOTE_STATE_TOKEN="与云托管 REMOTE_STATE_TOKEN 一致"
 export TODO_SYNC_LOG_DIR="/var/log/yyt-todo-sync"
 ```
 

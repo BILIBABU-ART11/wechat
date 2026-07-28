@@ -5,11 +5,12 @@
 ```text
 WeChat Mini Program
   -> Tencent CloudBase Express API
-    -> COS JSON state file
+    -> Linux remote JSON state API
     -> WeChat OpenAPI
 
 Fixed IP Server
   -> YYT OpenAPI
+  -> local remote-state-server
   -> Tencent CloudBase import API
 ```
 
@@ -50,13 +51,12 @@ mysql > cos-json > memory
 Current recommended mode:
 
 ```env
-STORAGE_MODE=cos-json
-COS_BUCKET=...
-COS_REGION=ap-shanghai
-COS_STATE_KEY=yyt/yyt-state.json
+STORAGE_MODE=remote-json
+REMOTE_STATE_API_BASE_URL=https://your-linux-state-domain
+REMOTE_STATE_TOKEN=...
 ```
 
-The COS JSON file stores only current operational state:
+The Linux JSON file stores only current operational state:
 
 - User binding records
 - Subscription authorization state

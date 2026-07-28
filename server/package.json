@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "node tests/api.test.js && node tests/cos-json-state.test.js",
+    "test": "node tests/api.test.js && node tests/cos-json-state.test.js && node tests/remote-json-state.test.js",
     "smoke": "node tests/api.test.js"
   },
   "dependencies": {

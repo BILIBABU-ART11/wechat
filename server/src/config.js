@@ -53,6 +53,11 @@ module.exports = {
       || process.env.TENCENTCLOUD_TOKEN
       || ''
   },
+  remoteState: {
+    baseUrl: process.env.REMOTE_STATE_API_BASE_URL || '',
+    token: process.env.REMOTE_STATE_TOKEN || '',
+    timeoutMs: Number(process.env.REMOTE_STATE_TIMEOUT_MS || 10000)
+  },
   todoApi: {
     baseUrl: process.env.TODO_API_BASE_URL || 'https://accumedical.aiforce.cloud/app/app_4jwag2n0mjq73',
     apiKey: process.env.TODO_API_KEY || '',

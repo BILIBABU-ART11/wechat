@@ -2,6 +2,7 @@ const express = require('express');
 const { authenticate } = require('../middleware/auth');
 const config = require('../config');
 const store = require('../services/mockStore');
+const accountStore = require('../services/accountStore');
 const todoStatService = require('../services/todoStatService');
 const reminderJobService = require('../services/reminderJobService');
 
@@ -41,6 +42,7 @@ function readImportToken(req) {
 }
 
 router.post('/import', async (req, res, next) => {
+  const startedAt = new Date().toISOString();
   try {
     if (!config.todoImportToken) {
       res.status(500).json({ code: 500, message: 'TODO_IMPORT_TOKEN is not configured', data: null });
@@ -55,6 +57,17 @@ router.post('/import', async (req, res, next) => {
     if (req.body && req.body.trigger_reminders) {
       reminderResult = await reminderJobService.runReminderJob('import');
     }
+    if (!config.mockMode) {
+      await accountStore.recordImportRun({
+        status: 'success',
+        source: (req.body && req.body.meta && req.body.meta.source) || 'todo-stat-snapshots',
+        imported_count: importResult.imported_count,
+        storage: importResult.storage,
+        started_at: startedAt,
+        finished_at: new Date().toISOString(),
+        meta: req.body && req.body.meta
+      });
+    }
     res.json({
       code: 0,
       message: 'ok',
@@ -64,6 +77,22 @@ router.post('/import', async (req, res, next) => {
       }
     });
   } catch (error) {
+    if (!config.mockMode) {
+      try {
+        await accountStore.recordImportRun({
+          status: 'failed',
+          source: (req.body && req.body.meta && req.body.meta.source) || 'todo-stat-snapshots',
+          imported_count: 0,
+          storage: '',
+          started_at: startedAt,
+          finished_at: new Date().toISOString(),
+          meta: req.body && req.body.meta,
+          error_message: error.message
+        });
+      } catch (logError) {
+        console.error('[todo-import] failed to write import log', logError);
+      }
+    }
     next(error);
   }
 });

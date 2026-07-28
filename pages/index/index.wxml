@@ -5,5 +5,5 @@
     <article-card wx:for="{{reminders}}" wx:key="id" article="{{item}}" bind:open="openArticle"></article-card>
   </view>
 
-  <empty-state wx:else title="暂无提醒" desc="当前用户暂无未处理待办"></empty-state>
+  <empty-state wx:else title="暂无提醒" desc="当前绑定用户暂无未处理待办"></empty-state>
 </view>

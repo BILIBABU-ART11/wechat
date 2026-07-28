@@ -1,8 +1,8 @@
 param(
   [string]$TaskNamePrefix = "YYT Todo Sync",
   [string]$ScriptPath = "",
-  [string]$RunAtMorning = "09:00",
-  [string]$RunAtAfternoon = "17:00"
+  [string]$RunAtMorning = "09:20",
+  [string]$RunAtAfternoon = "17:20"
 )
 
 $ErrorActionPreference = "Stop"
@@ -16,8 +16,8 @@ $powerShell = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
 $arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$ScriptPath`""
 
 $times = @(
-  @{ Name = "$TaskNamePrefix 0900"; Time = $RunAtMorning },
-  @{ Name = "$TaskNamePrefix 1700"; Time = $RunAtAfternoon }
+  @{ Name = "$TaskNamePrefix 0920"; Time = $RunAtMorning },
+  @{ Name = "$TaskNamePrefix 1720"; Time = $RunAtAfternoon }
 )
 
 foreach ($item in $times) {

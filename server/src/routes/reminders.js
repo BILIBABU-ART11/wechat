@@ -4,8 +4,12 @@ const reminderJobService = require('../services/reminderJobService');
 
 const router = express.Router();
 
-router.get('/status', authenticate, (req, res) => {
-  res.json({ code: 0, message: 'ok', data: reminderJobService.getStatus() });
+router.get('/status', authenticate, async (req, res, next) => {
+  try {
+    res.json({ code: 0, message: 'ok', data: await reminderJobService.getStatus(req.user.id) });
+  } catch (error) {
+    next(error);
+  }
 });
 
 router.post('/run', authenticate, async (req, res, next) => {

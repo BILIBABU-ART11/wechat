@@ -1,8 +1,10 @@
-# 腾讯云托管快速上线
+# 腾讯云托管上线配置
 
-## 1. 部署后端服务
+## 后端部署
 
-如果你使用「模板二次开发」生成的 GitHub 仓库和流水线，保持仓库根目录构建即可。本项目根目录已经提供：
+本项目是 Express.js 后端，腾讯云托管语言模板选择 **Express.js**。
+
+仓库根目录已提供：
 
 ```text
 Dockerfile
@@ -11,114 +13,87 @@ package.json
 index.js
 ```
 
-根目录 `Dockerfile` 和 `index.js` 都会实际启动 `server/src/index.js`。因此无论云托管使用 Dockerfile 模式，还是 Express.js 普通 Node 构建模式，都能启动同一个后端。
-
-如果你在云托管控制台手动新建服务，也可以把云托管服务目录选择为：
-
-```text
-server
-```
-
-并使用 `server/Dockerfile` 构建。
-
-模板流水线默认容器端口为：
+根目录启动会实际加载 `server/src/index.js`。模板流水线默认容器端口使用：
 
 ```text
 80
 ```
 
-如果手动使用 `server/Dockerfile` 部署，容器端口可使用：
+## 云托管环境变量
 
-```text
-3000
+正式环境建议使用下面配置。密钥不要提交到 GitHub，只放在云托管环境变量里。
+
+```json
+{
+  "PORT": "80",
+  "NODE_ENV": "production",
+  "MOCK_MODE": "false",
+  "ALLOWED_ORIGINS": "*",
+  "ENABLE_EGRESS_IP_CHECK": "false",
+
+  "TODO_DATA_SOURCE": "import",
+  "TODO_IMPORT_TOKEN": "替换为强随机导入密钥",
+  "TODO_API_BASE_URL": "https://accumedical.aiforce.cloud/app/app_4jwag2n0mjq73",
+  "TODO_API_KEY": "",
+  "TODO_API_TIMEOUT_MS": "20000",
+
+  "REMINDER_SCHEDULE_ENABLED": "false",
+  "REMINDER_SCHEDULE_TIMES": "09:20,17:20",
+  "REMINDER_TIME_ZONE": "Asia/Shanghai",
+  "REMINDER_SCHEDULE_POLL_MS": "60000",
+  "REMINDER_FETCH_PAGE_SIZE": "100",
+  "REMINDER_SEND_ONLY_PENDING": "true",
+
+  "WECHAT_APP_ID": "wx964c3e4ac820ac37",
+  "WECHAT_APP_SECRET": "微信公众平台获取的AppSecret",
+  "WECHAT_SUBSCRIBE_TEMPLATE_ID": "订阅消息模板ID",
+  "WECHAT_SUBSCRIBE_TEMPLATE_PAGE": "pages/index/index",
+
+  "SUBSCRIBE_TEMPLATE_IDS": "",
+  "APP_TOKEN_SECRET": "替换为强随机业务Token密钥"
+}
 ```
 
-## 2. 云托管环境变量
+说明：
 
-在云托管服务的环境变量中填写：
+- `TODO_DATA_SOURCE=import` 表示云托管只读取固定 IP 服务器导入的数据。
+- `REMINDER_SCHEDULE_ENABLED=false` 表示云托管不自己定时拉取，避免和固定 IP 服务器重复触发。
+- 固定 IP 服务器导入数据时会带 `trigger_reminders=true`，导入成功后自动触发提醒发送。
+- `TODO_IMPORT_TOKEN` 必须和固定 IP 服务器脚本中的值一致。
+- MySQL 可选。没有 MySQL 时使用内存模式，只保留当前容器生命周期内的数据、订阅和日志。
 
-```env
-# 模板流水线根目录 Dockerfile 使用 80；手动使用 server/Dockerfile 时可填 3000。
-PORT=80
-NODE_ENV=production
-MOCK_MODE=false
-ALLOWED_ORIGINS=*
-ENABLE_EGRESS_IP_CHECK=false
+如后续需要持久化，再补充：
 
-TODO_DATA_SOURCE=api
-TODO_IMPORT_TOKEN=替换为导入密钥
-TODO_API_BASE_URL=https://accumedical.aiforce.cloud/app/app_4jwag2n0mjq73
-TODO_API_KEY=替换为院院通API_KEY
-TODO_API_TIMEOUT_MS=20000
-
-REMINDER_SCHEDULE_ENABLED=true
-REMINDER_SCHEDULE_TIMES=09:00,17:00
-REMINDER_TIME_ZONE=Asia/Shanghai
-REMINDER_SCHEDULE_POLL_MS=60000
-REMINDER_FETCH_PAGE_SIZE=100
-REMINDER_SEND_ONLY_PENDING=true
-
-WECHAT_APP_ID=替换为小程序AppID
-WECHAT_APP_SECRET=替换为小程序AppSecret
-WECHAT_SUBSCRIBE_TEMPLATE_ID=替换为订阅消息模板ID
-WECHAT_SUBSCRIBE_TEMPLATE_PAGE=pages/index/index
-
-APP_TOKEN_SECRET=替换为强随机字符串
+```json
+{
+  "MYSQL_ADDRESS": "云托管MySQL地址，例如 10.x.x.x:3306",
+  "MYSQL_USERNAME": "root",
+  "MYSQL_PASSWORD": "云托管MySQL密码",
+  "MYSQL_DATABASE": "nodejs_demo"
+}
 ```
 
-不要把本地 `server/.env` 上传为生产密钥来源，生产密钥应放在云托管环境变量里。
+## 小程序域名配置
 
-## 3. 配置前端云端地址
-
-云托管部署成功后会得到一个 HTTPS 服务域名，例如：
-
-```text
-https://xxxx.service.tcloudbase.com
-```
-
-打开：
-
-```text
-utils/constants.js
-```
-
-把 `API_BASE_URLS.cloud` 改成你的云托管域名，并把 `API_ENV` 改为：
-
-```js
-const API_ENV = 'cloud';
-```
-
-## 4. 微信公众平台配置
-
-在微信公众平台配置：
+云托管部署成功后，把 HTTPS 域名配置到微信公众平台：
 
 ```text
 开发管理 -> 开发设置 -> 服务器域名 -> request 合法域名
 ```
 
-加入云托管 HTTPS 域名。
-
-## 5. 院院通 IP 白名单
-
-把云托管服务访问院院通 API 的出口 IP 加入院院通白名单。
-
-如果云托管不能提供固定出口 IP，建议使用腾讯云固定公网出口能力，或改用云服务器 CVM/NAT 网关方案。
-
-临时查看当前云托管出口 IP 时，可以在云托管环境变量中设置：
-
-```env
-ENABLE_EGRESS_IP_CHECK=true
-```
-
-重新部署后访问：
+小程序端的云托管地址在：
 
 ```text
-https://你的云托管域名/health/egress-ip
+utils/constants.js
 ```
 
-返回的 `egress_ip` 就是当前容器访问公网时使用的出口 IP。拿到后建议把 `ENABLE_EGRESS_IP_CHECK` 改回 `false` 并重新部署。
+确认 `API_BASE_URLS.cloud` 是当前云托管域名，并保持：
 
-## 6. 验证
+```js
+const API_ENV = 'cloud';
+```
+
+## 健康检查
 
 后端健康检查：
 
@@ -126,10 +101,18 @@ https://你的云托管域名/health/egress-ip
 https://你的云托管域名/health
 ```
 
-返回类似：
+查看同步和提醒状态需要登录后调用：
 
-```json
-{"code":0,"message":"ok","data":{"service":"neurogaze-miniprogram-server","service_name":"院院通待办提醒服务","mock_mode":false}}
+```text
+GET /api/reminders/status
 ```
 
-提醒状态接口需要登录 token，可先在小程序端登录绑定后查看功能是否正常。
+临时排查出口 IP 时才开启：
+
+```json
+{
+  "ENABLE_EGRESS_IP_CHECK": "true"
+}
+```
+
+排查完请改回 `false` 并重新部署。

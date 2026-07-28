@@ -52,7 +52,7 @@ function requestBackend(config) {
       }, token ? { Authorization: `Bearer ${token}` } : {}),
       success(response) {
         if (response.statusCode === 401) {
-          const error = new Error('登录已过期');
+          const error = new Error('登录已过期，请重新登录');
           error.noFallback = true;
           redirectLogin();
           reject(error);

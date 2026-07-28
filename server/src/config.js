@@ -23,24 +23,25 @@ function readMysqlAddress(value) {
 }
 
 const mysqlAddress = readMysqlAddress(process.env.MYSQL_ADDRESS);
+const mockMode = readBool(process.env.MOCK_MODE, true);
 
 module.exports = {
   port: Number(process.env.PORT || 3000),
-  mockMode: readBool(process.env.MOCK_MODE, true),
+  mockMode,
   allowedOrigins: process.env.ALLOWED_ORIGINS || '*',
   tokenSecret: process.env.APP_TOKEN_SECRET || 'mock-secret',
   todoImportToken: process.env.TODO_IMPORT_TOKEN || '',
-  enableEgressIpCheck: readBool(process.env.ENABLE_EGRESS_IP_CHECK, true),
+  enableEgressIpCheck: readBool(process.env.ENABLE_EGRESS_IP_CHECK, false),
   todoApi: {
     baseUrl: process.env.TODO_API_BASE_URL || 'https://accumedical.aiforce.cloud/app/app_4jwag2n0mjq73',
     apiKey: process.env.TODO_API_KEY || '',
     timeoutMs: Number(process.env.TODO_API_TIMEOUT_MS || 10000),
-    dataSource: process.env.TODO_DATA_SOURCE || 'api',
+    dataSource: process.env.TODO_DATA_SOURCE || 'import',
     dataFile: process.env.TODO_DATA_FILE || path.resolve(__dirname, '..', '..', 'real-data', 'todo-snapshots-latest.json')
   },
   reminderSchedule: {
-    enabled: readBool(process.env.REMINDER_SCHEDULE_ENABLED, true),
-    times: readList(process.env.REMINDER_SCHEDULE_TIMES || '09:00,17:00'),
+    enabled: readBool(process.env.REMINDER_SCHEDULE_ENABLED, mockMode),
+    times: readList(process.env.REMINDER_SCHEDULE_TIMES || '09:20,17:20'),
     pollMs: Number(process.env.REMINDER_SCHEDULE_POLL_MS || 60000),
     pageSize: Number(process.env.REMINDER_FETCH_PAGE_SIZE || 100),
     sendOnlyPending: readBool(process.env.REMINDER_SEND_ONLY_PENDING, true),

@@ -40,10 +40,10 @@ function normalizePageQuery(query) {
 function normalizeItems(items, userId) {
   const normalized = (Array.isArray(items) ? items : []).map((item) => ({
     id: String(item.id || ''),
-    snapshotDate: String(item.snapshotDate || ''),
-    userId: String(item.userId || ''),
-    userName: String(item.userName || ''),
-    pendingCount: Number(item.pendingCount || 0),
+    snapshotDate: String(item.snapshotDate || item.snapshot_date || ''),
+    userId: String(item.userId || item.user_id || ''),
+    userName: String(item.userName || item.user_name || ''),
+    pendingCount: Number(item.pendingCount || item.pending_count || 0),
     content: String(item.content || '')
   })).filter((item) => item.id && item.userId);
   if (!userId) return normalized;
@@ -121,15 +121,16 @@ function dateTimeFromSnapshotDate(snapshotDate, fallback) {
 
 function snapshotToArticle(item) {
   const pendingCount = Number(item.pendingCount || 0);
+  const userName = item.userName || '未知用户';
   return {
     id: item.id,
     record_id: item.id,
     user_id: item.userId,
     snapshot_date: item.snapshotDate,
-    title: `${item.userName || '未知用户'} 待办提醒`,
-    source: '院院通销售管理系统',
+    title: `${userName} 待办提醒`,
+    source: '院院通',
     original_url: '',
-    company: item.userName || '',
+    company: userName,
     product: `${pendingCount} 条待办`,
     category: '待办统计',
     ai_score: priorityFromPendingCount(pendingCount),
@@ -137,10 +138,10 @@ function snapshotToArticle(item) {
     publish_time: dateTimeFromSnapshotDate(item.snapshotDate),
     deadline: dateTimeFromSnapshotDate(item.snapshotDate),
     status: pendingCount > 0 ? 'pending' : 'completed',
-    owner: item.userName || '',
+    owner: item.userId,
     comment: item.content || '',
     reminder_reason: item.content || `当前还有 ${pendingCount} 条待办未处理`,
-    procurement_unit: '院院通销售管理系统',
+    procurement_unit: '院院通',
     updated_at: dateTimeFromSnapshotDate(item.snapshotDate)
   };
 }
@@ -161,7 +162,7 @@ function snapshotToMessage(item) {
 
 function filterArticles(articles, query) {
   let list = articles.slice();
-  if (query.category && query.category !== '全部') {
+  if (query.category && query.category !== '全部' && query.category !== '待办统计') {
     list = list.filter((item) => item.category === query.category);
   }
   if (query.score && query.score !== 'all') {

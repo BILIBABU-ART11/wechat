@@ -16,8 +16,8 @@ CLOUD_API_BASE_URL=${CLOUD_API_BASE_URL:-https://express-0kx6-284420-7-145514828
 TODO_IMPORT_TOKEN=${TODO_IMPORT_TOKEN:-}
 TODO_SYNC_LOG_DIR=$LOG_DIR
 
-0 9 * * * cd "$PROJECT_DIR" && "$NODE_BIN" scripts/sync-todo-to-cloud.js >> "$LOG_DIR/cron-0900.log" 2>&1
-0 17 * * * cd "$PROJECT_DIR" && "$NODE_BIN" scripts/sync-todo-to-cloud.js >> "$LOG_DIR/cron-1700.log" 2>&1
+20 9 * * * cd "$PROJECT_DIR" && "$NODE_BIN" scripts/sync-todo-to-cloud.js >> "$LOG_DIR/cron-0920.log" 2>&1
+20 17 * * * cd "$PROJECT_DIR" && "$NODE_BIN" scripts/sync-todo-to-cloud.js >> "$LOG_DIR/cron-1720.log" 2>&1
 EOF
 
 echo "Cron file written: $CRON_FILE"

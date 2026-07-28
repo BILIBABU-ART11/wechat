@@ -8,7 +8,7 @@ const STATUS_LABELS = {
   follow_up: '结果跟进',
   completed: '已完成',
   abandoned: '已放弃',
-  pending: '待关注',
+  pending: '待处理',
   processing: '跟进中',
   done: '已完成',
   ignored: '已忽略'
@@ -43,15 +43,16 @@ module.exports = {
   ENABLE_MOCK_FALLBACK: false,
   API_ENV,
   API_BASE_URL: API_BASE_URLS[API_ENV],
-  REQUIRE_BIND_ON_LAUNCH: true,
-  TOKEN_KEY: 'neurogaze_token',
-  USER_KEY: 'neurogaze_user',
-  SUBSCRIBE_STATE_KEY: 'neurogaze_subscribe_state',
+  REQUIRE_BIND_ON_LAUNCH: false,
+  TOKEN_KEY: 'yuanyuantong_token',
+  USER_KEY: 'yuanyuantong_user',
+  BIND_TOKEN_KEY: 'yuanyuantong_bind_token',
+  SUBSCRIBE_STATE_KEY: 'yuanyuantong_subscribe_state',
   STATUS_LABELS,
   STATUS_VALUES,
   STATUS_OPTIONS: [
-    { label: '全部阶段', value: '' },
-    { label: '待关注', value: 'pending' },
+    { label: '全部状态', value: '' },
+    { label: '待处理', value: 'pending' },
     { label: '已完成', value: 'completed' }
   ],
   CATEGORIES: ['全部', '待办统计'],
@@ -63,7 +64,7 @@ module.exports = {
   ROLE_LABELS: {
     admin: '管理员',
     analyst: '分析员',
-    viewer: '观察员'
+    viewer: '订阅用户'
   },
   SUBSCRIBE_TEMPLATE_IDS: []
 };

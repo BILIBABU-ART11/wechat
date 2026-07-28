@@ -15,7 +15,7 @@ function assertWechatConfigured() {
     error.status = 500;
     throw error;
   }
-  if (!config.wechat.appId || !config.wechat.appSecret || !config.wechat.subscribeTemplateId) {
+  if (!config.wechat.appId || !config.wechat.appSecret || !getTemplateIds().length) {
     const error = new Error('WeChat subscription message credentials or template ID are not configured.');
     error.status = 500;
     throw error;
@@ -115,5 +115,6 @@ async function sendSubscribeMessage(payload) {
 
 module.exports = {
   getTemplateIds,
-  sendSubscribeMessage
+  sendSubscribeMessage,
+  buildMessageData
 };

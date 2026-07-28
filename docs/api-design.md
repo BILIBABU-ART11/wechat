@@ -174,7 +174,7 @@ Returns scheduler status and the most recent reminder job result.
 
 ## POST /api/reminders/run
 
-Manually runs the same workflow as the 09:00 and 17:00 scheduler: fetch todo snapshots, create reminder-center messages, and attempt WeChat subscription-message sends.
+Manually runs the same workflow as the 09:20 and 17:20 scheduler: fetch todo snapshots, create reminder-center messages, and attempt WeChat subscription-message sends.
 
 ## POST /api/webhooks/feishu-record-created
 

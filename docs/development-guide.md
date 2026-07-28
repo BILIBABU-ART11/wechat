@@ -1,104 +1,60 @@
-# Development Guide
+# 开发指南
 
-## Mini Program
-
-Use WeChat Developer Tools to import the project root `NeuroGaze_MiniProgram`.
-
-The frontend source is organized as:
-
-```text
-pages/        page logic and UI
-components/   reusable cards, badges, loading and empty states
-services/     request wrapper, auth service, API service, mock service
-utils/        constants, storage, formatting, login guard, normalization helper
-```
-
-The MVP starts in backend-first mode. Important files:
-
-- `utils/constants.js`: `REQUEST_MODE`, `MOCK_ENABLED`, `ENABLE_MOCK_FALLBACK`, `API_BASE_URL`, status values, category filters.
-- `services/request.js`: wraps `wx.request`, token header, loading, 401 redirect, backend-first flow, mock fallback.
-- `services/mock.js`: frontend fallback mock data and endpoint simulation.
-- `services/api.js`: business API methods with response normalization.
-- `utils/authGuard.js`: shared login guard for protected pages.
-- `utils/normalize.js`: formats project and reminder time fields before rendering.
-
-## Backend
-
-Use Node.js 18 or newer. The backend relies on the built-in `fetch`, `URL`, and `AbortController` APIs.
-
-Install and start:
+## 本地运行
 
 ```bash
 cd server
 npm install
-npm run dev
-```
-
-Run smoke tests:
-
-```bash
 npm test
 ```
 
-## Switching To Real Services
+小程序端使用微信开发者工具导入项目根目录。
 
-1. Copy `server/.env.example` to `server/.env`.
-2. Set `MOCK_MODE=false`.
-3. Fill `TODO_API_BASE_URL` and `TODO_API_KEY` from the 院院通 API document. The backend sends `Authorization: Bearer <TODO_API_KEY>`.
-4. Keep `TODO_DATA_SOURCE=api` for normal operation. Use `TODO_DATA_SOURCE=file` only for local snapshot testing.
-5. Make sure the backend server出口 IP is added to the 院院通 IP whitelist.
-6. Fill WeChat and Feishu credentials in `.env` when those integrations are enabled.
-7. Replace mock-only login token logic with JWT or session-backed token storage before production release.
-8. Set frontend `API_BASE_URL` to the deployed backend HTTPS URL.
-9. Keep frontend `ENABLE_MOCK_FALLBACK` as `false` so API failures do not display mock records.
-10. Keep frontend `MOCK_ENABLED` as `false`.
+## 正式服务模式
 
-When `MOCK_MODE=false`, these Mini Program backend endpoints read from the 院院通待办快照 API:
-
-- `GET /api/dashboard/summary`
-- `GET /api/articles`
-- `GET /api/articles/:id`
-- `GET /api/messages`
-- `GET /api/todo-stat/snapshots`
-
-The external source endpoint is `GET /openapi/todo-stat/snapshots` with query parameters `page`, `pageSize`, and optional `snapshotDate`.
-
-## Scheduled Reminders
-
-The backend starts a lightweight scheduler from `server/src/index.js`.
-
-Default schedule:
+正式环境使用固定 IP 服务器导入模式：
 
 ```env
-REMINDER_SCHEDULE_ENABLED=true
-REMINDER_SCHEDULE_TIMES=09:00,17:00
+MOCK_MODE=false
+TODO_DATA_SOURCE=import
+REMINDER_SCHEDULE_ENABLED=false
+REMINDER_SCHEDULE_TIMES=09:20,17:20
 REMINDER_TIME_ZONE=Asia/Shanghai
-REMINDER_SCHEDULE_POLL_MS=60000
-REMINDER_FETCH_PAGE_SIZE=100
-REMINDER_SEND_ONLY_PENDING=true
 ```
 
-At each configured time, the job fetches all todo snapshots, creates reminder-center messages for rows where `pendingCount > 0`, and attempts to send WeChat subscription messages to users who granted subscription permission.
+说明：
 
-Manual endpoints:
+- 云托管不直接请求院院通 API。
+- 固定 IP 服务器运行 `scripts/sync-todo-to-cloud.js`。
+- 同步脚本请求院院通 API 后 POST 到 `/api/todo-stat/import`。
+- 导入成功后由后端触发微信订阅消息发送。
 
-```text
-GET  /api/reminders/status
-POST /api/reminders/run
+## 必需配置
+
+云托管：
+
+```env
+TODO_IMPORT_TOKEN=强随机导入密钥
+APP_TOKEN_SECRET=强随机业务Token密钥
+WECHAT_APP_ID=wx964c3e4ac820ac37
+WECHAT_APP_SECRET=微信公众平台获取的AppSecret
+WECHAT_SUBSCRIBE_TEMPLATE_ID=订阅消息模板ID
 ```
 
-Real WeChat push requires `WECHAT_APP_ID`, `WECHAT_APP_SECRET`, and `WECHAT_SUBSCRIBE_TEMPLATE_ID`. The Mini Program reads template IDs from `GET /api/subscribe/config` before calling `wx.requestSubscribeMessage`.
+MySQL 可选。不配置 MySQL 时使用内存模式，适合只展示最近一次导入数据的轻量上线方式。
 
-## Validation
-
-From the project root:
+固定 IP 服务器：
 
 ```bash
-node scripts/validate-structure.js
+export TODO_API_KEY="院院通API_KEY"
+export CLOUD_API_BASE_URL="云托管HTTPS域名"
+export TODO_IMPORT_TOKEN="与云托管一致"
 ```
 
-From the backend directory:
+## 验证
 
-```bash
-npm test
-```
+- 绑定测试：只允许纯数字院院通用户 ID。
+- 隔离测试：不同微信用户只能看到自己绑定 ID 的待办。
+- 导入测试：`/api/todo-stat/import` 返回导入数量。
+- 订阅测试：用户授权后 `/api/user/me` 返回订阅状态。
+- 提醒测试：`/api/reminders/status` 返回最近导入和最近发送记录。

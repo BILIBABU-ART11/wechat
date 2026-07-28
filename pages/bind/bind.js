@@ -3,9 +3,8 @@ const auth = require('../../services/auth');
 Page({
   data: {
     loading: false,
-    activeBindType: 'user_id',
     bindValue: '',
-    placeholder: '请输入院院通用户ID授权码'
+    placeholder: '请输入院院通用户 ID 授权码'
   },
 
   handleInput(event) {
@@ -16,7 +15,7 @@ Page({
     if (this.data.loading) return;
     const bindValue = String(this.data.bindValue || '').trim();
     if (!/^\d{6,}$/.test(bindValue)) {
-      wx.showToast({ title: '请输入有效用户ID授权码', icon: 'none' });
+      wx.showToast({ title: '请输入有效用户 ID 授权码', icon: 'none' });
       return;
     }
     this.setData({ loading: true });

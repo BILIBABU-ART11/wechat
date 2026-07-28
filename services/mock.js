@@ -352,7 +352,7 @@ function route(options) {
     return ok({
       running: false,
       schedule_enabled: true,
-      schedule_times: ['09:00', '17:00'],
+      schedule_times: ['09:20', '17:20'],
       last_result: null
     });
   }

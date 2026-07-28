@@ -1,6 +1,7 @@
 const {
   TOKEN_KEY,
   USER_KEY,
+  BIND_TOKEN_KEY,
   SUBSCRIBE_STATE_KEY
 } = require('./constants');
 
@@ -45,15 +46,27 @@ function setUser(user) {
   setStorage(USER_KEY, user);
 }
 
+function getBindToken() {
+  return getStorage(BIND_TOKEN_KEY, '');
+}
+
+function setBindToken(token) {
+  if (token) setStorage(BIND_TOKEN_KEY, token);
+  else removeStorage(BIND_TOKEN_KEY);
+}
+
 function clearAll() {
   removeStorage(TOKEN_KEY);
   removeStorage(USER_KEY);
+  removeStorage(BIND_TOKEN_KEY);
+  removeStorage(SUBSCRIBE_STATE_KEY);
 }
 
 function getSubscribeState() {
   return getStorage(SUBSCRIBE_STATE_KEY, {
     enabled: false,
-    mock: true,
+    mock: false,
+    remaining_count: 0,
     updated_at: ''
   });
 }
@@ -70,6 +83,8 @@ module.exports = {
   setToken,
   getUser,
   setUser,
+  getBindToken,
+  setBindToken,
   clearAll,
   getSubscribeState,
   setSubscribeState

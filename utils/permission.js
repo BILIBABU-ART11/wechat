@@ -4,10 +4,10 @@ function requestReminderSubscribe(tmplIds) {
   const templateIds = tmplIds || SUBSCRIBE_TEMPLATE_IDS;
   if (!templateIds.length || typeof wx === 'undefined' || !wx.requestSubscribeMessage) {
     return Promise.resolve({
-      accepted: true,
-      mock: true,
+      accepted: false,
+      mock: false,
       template_ids: templateIds,
-      reason: 'mock_or_no_template_ids'
+      reason: 'no_template_ids'
     });
   }
 

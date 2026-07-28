@@ -58,7 +58,15 @@
 
 ## 固定 IP 服务器环境变量
 
-在固定 IP 服务器上设置：
+如果固定 IP 服务器是 Linux，建议用 Node.js 脚本，先设置：
+
+```bash
+export TODO_API_KEY="院院通API_KEY"
+export CLOUD_API_BASE_URL="https://express-0kx6-284420-7-1455148284.sh.run.tcloudbase.com"
+export TODO_IMPORT_TOKEN="与云托管TODO_IMPORT_TOKEN一致"
+```
+
+如果固定 IP 服务器是 Windows，也可以在 PowerShell 中设置：
 
 ```powershell
 $env:TODO_API_KEY = "院院通API_KEY"
@@ -69,6 +77,15 @@ $env:TODO_IMPORT_TOKEN = "与云托管TODO_IMPORT_TOKEN一致"
 正式运行建议设置为系统环境变量，而不是只在当前 PowerShell 窗口里设置。
 
 ## 手动执行一次
+
+Linux / macOS / 通用 Node.js：
+
+```bash
+cd /path/to/NeuroGaze_MiniProgram
+node scripts/sync-todo-to-cloud.js
+```
+
+Windows PowerShell：
 
 ```powershell
 cd "C:\path\to\NeuroGaze_MiniProgram"
@@ -99,6 +116,26 @@ YYT Todo Sync 1700
 ```
 
 分别每天 09:00 和 17:00 执行。
+
+## 注册 Linux cron 定时任务
+
+先确认当前 shell 里已经设置：
+
+```bash
+export TODO_API_KEY="院院通API_KEY"
+export CLOUD_API_BASE_URL="https://express-0kx6-284420-7-1455148284.sh.run.tcloudbase.com"
+export TODO_IMPORT_TOKEN="与云托管TODO_IMPORT_TOKEN一致"
+```
+
+然后执行：
+
+```bash
+cd /path/to/NeuroGaze_MiniProgram
+sh scripts/register-todo-sync-cron.sh
+crontab todo-sync.cron
+```
+
+默认每天 09:00 和 17:00 执行。请确认服务器系统时区为 `Asia/Shanghai`，或在服务器上配置北京时间。
 
 ## 验证
 

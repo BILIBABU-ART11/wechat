@@ -6,5 +6,6 @@ server/.env
 project.private.config.json
 real-data
 todo-sync-logs
+todo-sync.cron
 *.log
 server/*.log

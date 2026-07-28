@@ -7,3 +7,4 @@ dist/
 *.log
 real-data/
 todo-sync-logs/
+todo-sync.cron

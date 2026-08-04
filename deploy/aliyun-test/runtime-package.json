@@ -1,0 +1,9 @@
+{
+  "name": "yyt-aliyun-sync-runtime",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Runtime dependencies for the YYT Aliyun sync service",
+  "dependencies": {
+    "express": "4.22.2"
+  }
+}

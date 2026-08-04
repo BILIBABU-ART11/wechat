@@ -1,7 +1,9 @@
 const assert = require('assert');
 const {
   fetchAllTodoSnapshots,
-  createBatchId
+  createBatchId,
+  readConfig,
+  validateSyncConfig
 } = require('../../scripts/sync-todo-to-cloud');
 
 const logger = {
@@ -31,7 +33,27 @@ function response(payload, status = 200) {
 
 async function run() {
   const originalFetch = global.fetch;
+  const originalCloudTrigger = process.env.CLOUD_TRIGGER_ENABLED;
   try {
+    process.env.CLOUD_TRIGGER_ENABLED = 'false';
+    const localOnly = readConfig(process.cwd());
+    assert.strictEqual(localOnly.cloudTriggerEnabled, false);
+    assert.doesNotThrow(() => validateSyncConfig(Object.assign({}, localOnly, {
+      todoApiKey: 'test-key',
+      remoteStateBaseUrl: 'http://127.0.0.1:3100',
+      remoteStateToken: 'test-state-token',
+      cloudBaseUrl: '',
+      importToken: ''
+    })));
+    assert.throws(() => validateSyncConfig(Object.assign({}, localOnly, {
+      cloudTriggerEnabled: true,
+      todoApiKey: 'test-key',
+      remoteStateBaseUrl: 'http://127.0.0.1:3100',
+      remoteStateToken: 'test-state-token',
+      cloudBaseUrl: '',
+      importToken: ''
+    })), /cloud-base-url/);
+
     let call = 0;
     global.fetch = async () => {
       call += 1;
@@ -69,6 +91,8 @@ async function run() {
     );
   } finally {
     global.fetch = originalFetch;
+    if (originalCloudTrigger === undefined) delete process.env.CLOUD_TRIGGER_ENABLED;
+    else process.env.CLOUD_TRIGGER_ENABLED = originalCloudTrigger;
   }
   console.log('Todo sync boundary tests passed.');
 }

@@ -298,6 +298,16 @@ async function waitForRemoteBatch(config, batchId, logger) {
   throw new Error(`Timed out waiting for cloud reminder batch: ${batchId}`);
 }
 
+function validateSyncConfig(config) {
+  requireValue(config.todoApiKey, 'todo-api-key');
+  requireValue(config.remoteStateBaseUrl, 'remote-state-base-url');
+  requireValue(config.remoteStateToken, 'remote-state-token');
+  if (config.cloudTriggerEnabled) {
+    requireValue(config.cloudBaseUrl, 'cloud-base-url');
+    requireValue(config.importToken, 'import-token');
+  }
+}
+
 function readConfig(projectRoot) {
   const requestTimeout = Number(readArg('request-timeout-ms', process.env.TODO_SYNC_REQUEST_TIMEOUT_MS || 30000));
   return {
@@ -314,6 +324,7 @@ function readConfig(projectRoot) {
     todoTimeoutMs: Number(process.env.TODO_SYNC_TODO_TIMEOUT_MS || requestTimeout),
     remoteTimeoutMs: Number(process.env.TODO_SYNC_REMOTE_TIMEOUT_MS || 15000),
     cloudTimeoutMs: Number(process.env.TODO_SYNC_CLOUD_TIMEOUT_MS || requestTimeout),
+    cloudTriggerEnabled: readBool(readArg('cloud-trigger-enabled', process.env.CLOUD_TRIGGER_ENABLED), true),
     triggerReminders: readBool(readArg('trigger-reminders', process.env.TRIGGER_REMINDERS), true),
     logDir: readArg('log-dir', process.env.TODO_SYNC_LOG_DIR || path.join(projectRoot, 'todo-sync-logs'))
   };
@@ -326,32 +337,35 @@ async function run() {
   const startedAt = nowIso();
 
   try {
-    requireValue(config.todoApiKey, 'todo-api-key');
-    requireValue(config.cloudBaseUrl, 'cloud-base-url');
-    requireValue(config.importToken, 'import-token');
-    requireValue(config.remoteStateBaseUrl, 'remote-state-base-url');
-    requireValue(config.remoteStateToken, 'remote-state-token');
+    validateSyncConfig(config);
 
     logger.info('Todo sync job started', {
       node: process.version,
       todoBaseUrl: config.todoBaseUrl,
       cloudBaseUrl: config.cloudBaseUrl,
       remoteStateBaseUrl: config.remoteStateBaseUrl,
+      cloudTriggerEnabled: config.cloudTriggerEnabled,
+      triggerReminders: config.triggerReminders,
       pageSize: config.pageSize,
       maxPages: config.maxPages,
       requestRetries: config.requestRetries,
       hasTodoApiKey: true,
-      hasImportToken: true,
+      hasImportToken: Boolean(config.importToken),
       hasRemoteStateToken: true
     });
 
     const todoResult = await fetchAllTodoSnapshots(config, logger);
     const batchId = createBatchId(todoResult.items, startedAt);
     const remoteResult = await syncToRemoteState(config, todoResult, startedAt, batchId, logger);
-    const cloudResult = await triggerCloudImport(config, batchId, logger);
-    const reminderResult = cloudResult && cloudResult.data && cloudResult.data.reminder_result;
-    if (reminderResult && reminderResult.skipped && reminderResult.batch && reminderResult.batch.status === 'processing') {
-      await waitForRemoteBatch(config, batchId, logger);
+    let cloudResult = { skipped: true, reason: 'cloud trigger disabled' };
+    if (config.cloudTriggerEnabled) {
+      cloudResult = await triggerCloudImport(config, batchId, logger);
+      const reminderResult = cloudResult && cloudResult.data && cloudResult.data.reminder_result;
+      if (reminderResult && reminderResult.skipped && reminderResult.batch && reminderResult.batch.status === 'processing') {
+        await waitForRemoteBatch(config, batchId, logger);
+      }
+    } else {
+      logger.info('Cloud import trigger skipped', { batchId });
     }
     const finishedAt = nowIso();
     const jsonLogPath = writeJsonLog(config, logger, {
@@ -391,6 +405,7 @@ module.exports = {
   fetchAllTodoSnapshots,
   createBatchId,
   waitForRemoteBatch,
+  validateSyncConfig,
   readConfig,
   run
 };

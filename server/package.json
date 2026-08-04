@@ -10,14 +10,14 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "node tests/api.test.js && node tests/cos-json-state.test.js && node tests/remote-json-state.test.js && node tests/stability.test.js && node tests/sync-script.test.js",
+    "test": "node tests/api.test.js && node tests/cos-json-state.test.js && node tests/remote-json-state.test.js && node tests/stability.test.js && node tests/sync-script.test.js && node tests/local-sync-mode.test.js && node tests/deployment-package.test.js",
     "smoke": "node tests/api.test.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "cos-nodejs-sdk-v5": "^3.0.0",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "express": "4.22.2",
     "morgan": "^1.10.0",
     "mysql2": "^3.11.5"
   },

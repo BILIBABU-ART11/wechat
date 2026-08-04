@@ -1,0 +1,21 @@
+[Unit]
+Description=YYT Todo Sync Job
+After=network-online.target yyt-remote-state.service
+Wants=network-online.target
+Requires=yyt-remote-state.service
+
+[Service]
+Type=oneshot
+User=yyt
+Group=yyt
+WorkingDirectory=@APP_DIR@
+EnvironmentFile=/etc/yyt-todo-sync.env
+ExecStart=@NODE_BIN@ @APP_DIR@/scripts/sync-todo-to-cloud.js
+TimeoutStartSec=15min
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=@STATE_DIR@ @LOG_DIR@
+RestrictSUIDSGID=true

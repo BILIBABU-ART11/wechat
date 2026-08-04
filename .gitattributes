@@ -1,0 +1,4 @@
+.gitattributes text eol=lf
+deploy/aliyun-test/*.sh text eol=lf
+deploy/aliyun-test/systemd/*.service text eol=lf
+deploy/aliyun-test/systemd/*.timer text eol=lf

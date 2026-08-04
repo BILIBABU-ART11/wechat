@@ -1,0 +1,25 @@
+[Unit]
+Description=YYT Remote JSON State Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=yyt
+Group=yyt
+WorkingDirectory=@APP_DIR@
+Environment=NODE_ENV=production
+EnvironmentFile=/etc/yyt-remote-state.env
+ExecStart=@NODE_BIN@ @APP_DIR@/scripts/remote-state-server.js
+Restart=always
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=@STATE_DIR@
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

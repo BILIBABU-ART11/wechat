@@ -2,6 +2,7 @@ const config = require('../config');
 
 let cachedAccessToken = null;
 let cachedAccessTokenExpiresAt = 0;
+const PERMANENT_SEND_ERRORS = new Set([40037, 41030, 43101, 47003]);
 
 function getTemplateIds() {
   return config.subscribeTemplateIds.length
@@ -10,13 +11,13 @@ function getTemplateIds() {
 }
 
 function assertWechatConfigured() {
-  if (typeof fetch !== 'function') {
-    const error = new Error('Current Node.js runtime does not support fetch.');
+  if (!config.wechat.appId || !config.wechat.appSecret || !getTemplateIds().length) {
+    const error = new Error('WeChat subscription message credentials or template ID are not configured.');
     error.status = 500;
     throw error;
   }
-  if (!config.wechat.appId || !config.wechat.appSecret || !getTemplateIds().length) {
-    const error = new Error('WeChat subscription message credentials or template ID are not configured.');
+  if (!config.wechat.templateFieldsValid) {
+    const error = new Error('WECHAT_SUBSCRIBE_TEMPLATE_FIELDS is invalid.');
     error.status = 500;
     throw error;
   }
@@ -24,9 +25,7 @@ function assertWechatConfigured() {
 
 async function getAccessToken() {
   assertWechatConfigured();
-  if (cachedAccessToken && Date.now() < cachedAccessTokenExpiresAt) {
-    return cachedAccessToken;
-  }
+  if (cachedAccessToken && Date.now() < cachedAccessTokenExpiresAt) return cachedAccessToken;
   const url = new URL('https://api.weixin.qq.com/cgi-bin/token');
   url.searchParams.set('grant_type', 'client_credential');
   url.searchParams.set('appid', config.wechat.appId);
@@ -54,12 +53,18 @@ function trimValue(value, maxLength) {
 }
 
 function buildMessageData(payload) {
+  assertWechatConfigured();
+  const fields = config.wechat.templateFields;
   return {
-    thing1: { value: trimValue(payload.userName || '待办提醒', 20) },
-    number2: { value: String(Number(payload.pendingCount || 0)) },
-    thing3: { value: trimValue(payload.content || '您有待办事项需要处理', 20) },
-    date4: { value: payload.snapshotDate || new Date().toISOString().slice(0, 10) }
+    [fields.title]: { value: trimValue(payload.userName || '待办提醒', 20) },
+    [fields.count]: { value: String(Math.max(0, Number(payload.pendingCount || 0))) },
+    [fields.content]: { value: trimValue(payload.content || '您有待办事项需要处理', 20) },
+    [fields.date]: { value: payload.snapshotDate || new Date().toISOString().slice(0, 10) }
   };
+}
+
+function isPermanentWechatError(result) {
+  return Boolean(result && PERMANENT_SEND_ERRORS.has(Number(result.errcode)));
 }
 
 async function sendSubscribeMessage(payload) {
@@ -68,18 +73,12 @@ async function sendSubscribeMessage(payload) {
     return {
       sent: true,
       mock: true,
+      permanent: false,
       reason: 'Mock subscription message send succeeded locally.',
       payload
     };
   }
-  if (!templateId) {
-    return {
-      sent: false,
-      mock: false,
-      reason: 'No WeChat subscription template ID configured.',
-      payload
-    };
-  }
+  assertWechatConfigured();
   const accessToken = await getAccessToken();
   const url = new URL('https://api.weixin.qq.com/cgi-bin/message/subscribe/send');
   url.searchParams.set('access_token', accessToken);
@@ -101,6 +100,7 @@ async function sendSubscribeMessage(payload) {
     return {
       sent: response.ok && result.errcode === 0,
       mock: false,
+      permanent: isPermanentWechatError(result),
       result,
       payload: {
         openid: payload.openid,
@@ -116,5 +116,6 @@ async function sendSubscribeMessage(payload) {
 module.exports = {
   getTemplateIds,
   sendSubscribeMessage,
-  buildMessageData
+  buildMessageData,
+  isPermanentWechatError
 };

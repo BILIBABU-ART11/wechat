@@ -276,7 +276,22 @@ async function listMessages(query) {
 async function importSnapshots(payload) {
   const source = payload && (payload.data || payload);
   const items = normalizeItems(source && source.items);
-  return importedTodoStore.saveSnapshots(items, (payload && payload.imported_at) || (payload && payload.meta && payload.meta.fetchedAt));
+  const importedAt = (payload && payload.imported_at) || (payload && payload.meta && payload.meta.fetchedAt);
+  const batchId = payload && (payload.batch_id || (payload.meta && payload.meta.batch_id));
+  return importedTodoStore.saveSnapshots(items, importedAt, batchId);
+}
+
+async function getCurrentImportedBatch(batchId) {
+  const result = await importedTodoStore.listSnapshots({ page: 1, pageSize: 1 });
+  if (!result.batch_id || result.batch_id !== batchId) {
+    throw createHttpError(409, 'batch_id does not match the current imported snapshot');
+  }
+  return {
+    imported_count: Number(result.total || 0),
+    imported_at: result.imported_at || '',
+    batch_id: result.batch_id,
+    storage: 'remote-json'
+  };
 }
 
 module.exports = {
@@ -287,6 +302,7 @@ module.exports = {
   getSummary,
   listMessages,
   importSnapshots,
+  getCurrentImportedBatch,
   snapshotToArticle,
   snapshotToMessage
 };

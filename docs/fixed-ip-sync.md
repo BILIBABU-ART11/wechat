@@ -1,141 +1,90 @@
-# 固定 IP 服务器定时同步方案
+# 固定 IP Linux 部署
 
-## 架构
+## 1. 更新代码和依赖
+
+```bash
+cd /opt/NeuroGaze_MiniProgram
+git pull origin master
+npm install --omit=dev
+sudo useradd --system --home /opt/NeuroGaze_MiniProgram --shell /usr/sbin/nologin yyt 2>/dev/null || true
+sudo mkdir -p /opt/yyt-state /var/log/yyt-todo-sync
+sudo chown -R yyt:yyt /opt/NeuroGaze_MiniProgram /opt/yyt-state /var/log/yyt-todo-sync
+```
+
+## 2. 配置状态服务
+
+```bash
+sudo cp scripts/yyt-remote-state.env.example /etc/yyt-remote-state.env
+sudo cp scripts/yyt-remote-state.service.example /etc/systemd/system/yyt-remote-state.service
+sudo chown root:yyt /etc/yyt-remote-state.env
+sudo chmod 640 /etc/yyt-remote-state.env
+sudo systemctl daemon-reload
+sudo systemctl enable --now yyt-remote-state.service
+curl http://127.0.0.1:3100/health
+```
+
+编辑 `/etc/yyt-remote-state.env`，设置强随机 `REMOTE_STATE_TOKEN`。用 Nginx 或现有网关把 `127.0.0.1:3100` 反向代理为 HTTPS 域名，云托管只访问该 HTTPS 地址。
+
+升级前请备份现有文件：
+
+```bash
+sudo cp /opt/yyt-state/yyt-state.json /opt/yyt-state/yyt-state.before-v2.json 2>/dev/null || true
+```
+
+首次读写会自动把 v1 数据迁移为 v2，不会清空绑定和订阅。
+
+## 3. 配置同步任务
+
+```bash
+sudo cp scripts/yyt-todo-sync.env.example /etc/yyt-todo-sync.env
+sudo cp scripts/yyt-todo-sync.service.example /etc/systemd/system/yyt-todo-sync.service
+sudo cp scripts/yyt-todo-sync-morning.timer.example /etc/systemd/system/yyt-todo-sync-morning.timer
+sudo cp scripts/yyt-todo-sync-evening.timer.example /etc/systemd/system/yyt-todo-sync-evening.timer
+sudo chown root:yyt /etc/yyt-todo-sync.env
+sudo chmod 640 /etc/yyt-todo-sync.env
+```
+
+编辑 `/etc/yyt-todo-sync.env`，确保：
+
+- `TODO_API_KEY` 是院院通 API Key。
+- `TODO_IMPORT_TOKEN` 与云托管一致。
+- `REMOTE_STATE_TOKEN` 与状态服务和云托管一致。
+- `REMOTE_STATE_API_BASE_URL` 是 Linux 状态服务 HTTPS 地址。
+
+先手动验证：
+
+```bash
+sudo systemctl start yyt-todo-sync.service
+sudo systemctl status yyt-todo-sync.service
+sudo journalctl -u yyt-todo-sync.service -n 100 --no-pager
+```
+
+再启用北京时间定时器：
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now yyt-todo-sync-morning.timer
+sudo systemctl enable --now yyt-todo-sync-evening.timer
+systemctl list-timers 'yyt-todo-sync-*'
+```
+
+两个 timer 明确使用 `Asia/Shanghai`，分别在每天 09:20 和 17:20 运行。systemd 不会并行启动同一个 oneshot service，单次任务最多运行 15 分钟。
+
+旧的 `register-todo-sync-cron.sh` 和 `sync-todo-to-cloud.ps1` 已弃用，不再把密钥写入 cron 文件；正式同步入口只有 `node scripts/sync-todo-to-cloud.js`。
+
+## 4. 日志与恢复
+
+```bash
+sudo journalctl -u yyt-remote-state.service -n 100 --no-pager
+sudo journalctl -u yyt-todo-sync.service -n 100 --no-pager
+sudo tail -n 100 /var/log/yyt-todo-sync/todo-sync-latest.log
+```
+
+状态文件：
 
 ```text
-固定 IP 服务器
-  -> 每天 09:20 / 17:20 请求院院通 API
-  -> POST 到腾讯云托管导入接口
-
-腾讯云托管
-  -> 通过 remote-json 读写 Linux 状态服务
-  -> 小程序读取导入数据
-  -> 导入成功后触发订阅消息提醒
-
-Linux 状态服务
-  -> 保存 /opt/yyt-state/yyt-state.json
+/opt/yyt-state/yyt-state.json
+/opt/yyt-state/yyt-state.json.bak
 ```
 
-这样院院通白名单只需要加入固定 IP 服务器的公网 IP，腾讯云托管不再直接请求院院通 API。
-
-## 云托管环境变量
-
-```json
-{
-  "PORT": "80",
-  "NODE_ENV": "production",
-  "MOCK_MODE": "false",
-  "ALLOWED_ORIGINS": "*",
-  "ENABLE_EGRESS_IP_CHECK": "false",
-
-  "TODO_DATA_SOURCE": "import",
-  "TODO_IMPORT_TOKEN": "替换为强随机导入密钥",
-
-  "STORAGE_MODE": "remote-json",
-  "REMOTE_STATE_API_BASE_URL": "https://你的Linux状态服务域名",
-  "REMOTE_STATE_TOKEN": "替换为强随机远程状态密钥",
-  "REMOTE_STATE_TIMEOUT_MS": "10000",
-
-  "REMINDER_SCHEDULE_ENABLED": "false",
-  "REMINDER_SCHEDULE_TIMES": "09:20,17:20",
-  "REMINDER_TIME_ZONE": "Asia/Shanghai",
-  "REMINDER_SCHEDULE_POLL_MS": "60000",
-  "REMINDER_FETCH_PAGE_SIZE": "100",
-  "REMINDER_SEND_ONLY_PENDING": "true",
-
-  "WECHAT_APP_ID": "wx964c3e4ac820ac37",
-  "WECHAT_APP_SECRET": "微信公众平台获取的 AppSecret",
-  "WECHAT_SUBSCRIBE_TEMPLATE_ID": "订阅消息模板ID",
-  "WECHAT_SUBSCRIBE_TEMPLATE_PAGE": "pages/index/index",
-
-  "SUBSCRIBE_TEMPLATE_IDS": "",
-  "APP_TOKEN_SECRET": "替换为强随机业务Token密钥"
-}
-```
-
-Linux 状态服务启动：
-
-```bash
-cd /path/to/NeuroGaze_MiniProgram
-export REMOTE_STATE_TOKEN="与云托管 REMOTE_STATE_TOKEN 一致"
-export REMOTE_STATE_FILE="/opt/yyt-state/yyt-state.json"
-export REMOTE_STATE_PORT=3100
-node scripts/remote-state-server.js
-```
-
-也可以参考 `scripts/yyt-remote-state.service.example` 配置 systemd 常驻运行。
-
-## 固定 IP Linux 服务器环境变量
-
-```bash
-export TODO_API_KEY="院院通API_KEY"
-export CLOUD_API_BASE_URL="https://express-0kx6-284420-7-1455148284.sh.run.tcloudbase.com"
-export TODO_IMPORT_TOKEN="与云托管TODO_IMPORT_TOKEN一致"
-export REMOTE_STATE_API_BASE_URL="https://你的Linux状态服务域名"
-export REMOTE_STATE_TOKEN="与云托管REMOTE_STATE_TOKEN一致"
-export TODO_SYNC_LOG_DIR="/var/log/yyt-todo-sync"
-```
-
-## 手动运行一次
-
-```bash
-cd /path/to/NeuroGaze_MiniProgram
-node scripts/sync-todo-to-cloud.js
-```
-
-脚本会：
-
-1. 分页拉取院院通 `/openapi/todo-stat/snapshots`。
-2. 如果配置了 `REMOTE_STATE_API_BASE_URL`，先 POST 到 Linux 状态服务 `/todo/snapshots`。
-3. POST 到云托管 `/api/todo-stat/import`。
-4. 默认携带 `trigger_reminders=true`，导入后触发提醒。
-5. 写入详细日志。
-
-## 注册 Linux cron
-
-确认当前 shell 已设置环境变量后执行：
-
-```bash
-cd /path/to/NeuroGaze_MiniProgram
-sh scripts/register-todo-sync-cron.sh
-crontab todo-sync.cron
-crontab -l
-```
-
-应看到：
-
-```cron
-20 9 * * * ...
-20 17 * * * ...
-```
-
-请确认服务器系统时区为 `Asia/Shanghai`，或 cron 已按北京时间配置。
-
-## 日志
-
-每次运行会写入：
-
-```text
-todo-sync-logs/todo-sync-YYYYMMDD-HHmmss.log
-todo-sync-logs/todo-sync-YYYYMMDD-HHmmss.json
-todo-sync-logs/todo-sync-latest.log
-todo-sync-logs/todo-sync-latest.json
-```
-
-查看最新日志：
-
-```bash
-tail -n 100 todo-sync-logs/todo-sync-latest.log
-cat todo-sync-logs/todo-sync-latest.json
-```
-
-日志不会记录 `TODO_API_KEY` 或 `TODO_IMPORT_TOKEN` 明文。
-
-## 云托管导入接口
-
-```text
-POST /api/todo-stat/import
-Authorization: Bearer <TODO_IMPORT_TOKEN>
-```
-
-导入成功后，小程序首页会读取当前绑定用户 ID 下的待办数据。
+主文件损坏时服务自动读取备份；主文件和备份同时损坏时服务返回错误，不会生成空状态覆盖数据。

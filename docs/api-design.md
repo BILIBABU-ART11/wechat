@@ -1,181 +1,81 @@
-# API Design
+# API 接口
 
-All responses use:
-
-```json
-{
-  "code": 0,
-  "message": "ok",
-  "data": {}
-}
-```
-
-Authenticated endpoints require `Authorization: Bearer <token>`.
-
-## POST /api/auth/wechat-login
-
-Request:
+所有接口返回：
 
 ```json
-{ "code": "wx-login-code" }
+{ "code": 0, "message": "ok", "data": {} }
 ```
 
-Response when not bound:
+## 登录与用户
 
-```json
-{
-  "code": 0,
-  "message": "ok",
-  "data": {
-    "token": "",
-    "need_bind": true,
-    "bind_token": "mock-bind-session",
-    "user": null
-  }
-}
-```
+- `POST /api/auth/wechat-login`：输入 `{ "code": "wx.login code" }`。
+- `POST /api/auth/bind`：输入 `bind_type=user_id`、纯数字 `bind_value` 和登录返回的 bind token。
+- `GET /api/user/me`：使用业务 Bearer Token，返回当前用户、订阅和最近同步状态。
 
-## POST /api/auth/bind
+业务 Token 只包含 user_id。用户状态不存在时返回 401。
 
-Request:
+## 待办
 
-```json
-{
-  "bind_type": "user_id",
-  "bind_value": "1858541407738915"
-}
-```
+- `GET /api/todo-stat/snapshots`：只返回当前登录用户绑定 ID 的数据。
+- `GET /api/articles`：首页兼容接口，同样只返回当前用户数据。
+- `GET /api/articles/:id`：只允许读取当前用户自己的详情。
 
-Only `bind_type=user_id` is accepted. Email, phone, invite code, or any non-numeric value must be rejected by the backend.
+### POST /api/todo-stat/import
 
-Response:
-
-```json
-{
-  "code": 0,
-  "message": "ok",
-  "data": {
-    "token": "mock-token-u_mock_001",
-    "user": {
-      "id": "u_mock_001",
-      "internal_account": "1858541407738915",
-      "role": "analyst",
-      "bound": true
-    }
-  }
-}
-```
-
-## GET /api/dashboard/summary
-
-Returns today reminder counts, urgent reminder count, active project count, unread reminder count, and recent urgent projects.
-
-When `MOCK_MODE=false`, this summary is derived from the 院院通待办统计快照 API.
-
-## GET /api/articles
-
-The endpoint name is kept for MVP compatibility. UI treats these records as待办提醒 cards.
-
-When `MOCK_MODE=false`, the backend calls:
+鉴权：
 
 ```text
-GET https://accumedical.aiforce.cloud/app/app_4jwag2n0mjq73/openapi/todo-stat/snapshots
-Authorization: Bearer <TODO_API_KEY>
+Authorization: Bearer <TODO_IMPORT_TOKEN>
 ```
 
-Query parameters:
-
-| Name | Type | Description |
-| --- | --- | --- |
-| `category` | string | For example `院内招标` |
-| `score` | number/string | Minimum reminder level, for example `4` |
-| `status` | string | `new`, `evaluating`, `materials`, `submit_due`, `submitted`, `opening`, `follow_up`, `completed`, `abandoned` |
-| `keyword` | string | Search project title, purchaser, product, and summary |
-| `page` | number | Page number |
-| `page_size` | number | Page size |
-| `snapshotDate` | string | Optional snapshot date, format `YYYY-MM-DD` |
-
-Response item:
+请求：
 
 ```json
 {
-  "id": "b0c7aeef-f7cd-4b3a-a655-b08c29a9d27b",
-  "record_id": "b0c7aeef-f7cd-4b3a-a655-b08c29a9d27b",
-  "title": "魏家允 待办提醒",
-  "source": "院院通销售管理系统",
-  "company": "魏家允",
-  "product": "49 条待办",
-  "category": "待办统计",
-  "ai_score": 5,
-  "deadline": "2026-07-14T23:59:59+08:00",
-  "status": "pending",
-  "reminder_reason": "您还有49条待办未处理，请您尽快处理，谢谢"
+  "batch_id": "20260804-092000-数据摘要",
+  "trigger_reminders": true
 }
 ```
 
-## GET /api/articles/:id
+完整待办已经由 Linux 写入状态服务，云托管只接收批次号。同一 batch_id 重复提交不会重复发送。
 
-Returns the read-only tender project detail used by the Mini Program detail page.
+## 订阅
 
-## GET /api/messages
+### GET /api/subscribe/config
 
-Returns in-app reminders such as deadline reminders, stage changes, and new project reminders.
-
-When `MOCK_MODE=false`, messages are generated from待办快照 rows where `pendingCount > 0`.
-
-## GET /api/todo-stat/snapshots
-
-Returns the raw待办统计快照 list through the Mini Program backend.
-
-Query parameters:
-
-| Name | Type | Description |
-| --- | --- | --- |
-| `page` | number | Page number, default `1` |
-| `pageSize` | number | Page size, max `100`, default `20` |
-| `snapshotDate` | string | Optional snapshot date, format `YYYY-MM-DD` |
-
-Response item:
+使用业务 Token。返回模板、字段映射和 10 分钟有效的一次性 request_id：
 
 ```json
 {
-  "id": "b0c7aeef-f7cd-4b3a-a655-b08c29a9d27b",
-  "snapshotDate": "2026-07-14",
-  "userId": "1858541407738915",
-  "userName": "魏家允",
-  "pendingCount": 49,
-  "content": "您还有49条待办未处理，请您尽快处理，谢谢"
+  "template_ids": ["模板ID"],
+  "template_fields": {
+    "title": "thing1",
+    "count": "number2",
+    "content": "thing3",
+    "date": "date4"
+  },
+  "request_id": "signed request token"
 }
 ```
 
-## PATCH /api/messages/:id/read
+### POST /api/subscribe
 
-Marks one reminder as read.
-
-## POST /api/subscribe
-
-Saves the user's subscription authorization result.
-
-## GET /api/subscribe/config
-
-Returns subscription template IDs configured on the backend. The Mini Program uses this before calling `wx.requestSubscribeMessage`.
-
-Response:
+小程序调用 `wx.requestSubscribeMessage` 后提交：
 
 ```json
 {
-  "template_ids": ["template-id-from-wechat"]
+  "request_id": "上一步返回值",
+  "raw": {
+    "模板ID": "accept"
+  }
 }
 ```
 
-## GET /api/reminders/status
+后端忽略客户端自行填写的 accepted 和任意模板 ID。request_id 只能使用一次，重放返回 409。
 
-Returns scheduler status and the most recent reminder job result.
+## 提醒
 
-## POST /api/reminders/run
+- `GET /api/reminders/status`：普通登录用户查看自己的最近发送状态。
+- `POST /api/reminders/run`：仅供运维手动触发，使用 `TODO_IMPORT_TOKEN`，请求必须包含 batch_id。
 
-Manually runs the same workflow as the 09:20 and 17:20 scheduler: fetch todo snapshots, create reminder-center messages, and attempt WeChat subscription-message sends.
-
-## POST /api/webhooks/feishu-record-created
-
-Reserved for Feishu tender-created or stage-change triggers.
+系统不存在公开飞书 webhook。

@@ -1,80 +1,37 @@
-# Architecture
+# 系统架构
 
-院院通小程序是一个轻量待办提醒工具。用户登录后绑定自己的院院通用户 ID，只能看到该 ID 下的最近一次待办统计，并可主动订阅微信提醒。
-
-```text
-WeChat Mini Program
-  -> Tencent CloudBase Express API
-    -> Linux remote JSON state API
-    -> WeChat OpenAPI
-
-Fixed IP Server
-  -> YYT OpenAPI
-  -> local remote-state-server
-  -> Tencent CloudBase import API
-```
-
-## Login And Binding
-
-1. Mini Program calls `wx.login` and receives `code`.
-2. Mini Program sends `code` to `POST /api/auth/wechat-login`.
-3. Backend calls WeChat `code2Session` and receives `openid` plus `session_key`.
-4. Backend never returns `session_key` to the Mini Program.
-5. Backend checks whether `openid` is already bound to a YYT user ID.
-6. If bound, backend returns a business token and user profile.
-7. If not bound, backend returns `need_bind=true` and a short-lived bind token.
-8. User enters a numeric YYT user ID.
-9. Backend validates the value and binds `openid` to that ID.
-10. All later requests use `Authorization: Bearer <token>`.
-
-Only numeric YYT user IDs are accepted. Phone numbers, email addresses, and other binding paths are rejected.
-
-## Data Sync
-
-The Tencent CloudBase backend does not call the YYT API directly in production. A fixed IP server pulls YYT data twice per day and imports the result into CloudBase:
+## 数据流
 
 ```text
-POST /api/todo-stat/import
-Authorization: Bearer <TODO_IMPORT_TOKEN>
+微信小程序 -> 腾讯云托管 Express -> Linux 远程 JSON 状态服务
+固定 IP Linux -> 院院通 API -> 远程 JSON -> 腾讯云托管批次触发
+腾讯云托管 -> 微信订阅消息 API
 ```
 
-The import replaces the latest snapshot in COS JSON. The Mini Program always filters snapshots by the logged-in user's bound YYT user ID.
+Linux 是唯一持久化节点，保存用户绑定、按模板计算的订阅次数、最新待办、批次状态和最近发送结果。系统不使用 MySQL 或 COS，也不保存长期历史。
 
-## Storage
+## 登录与隔离
 
-Storage priority:
+小程序通过 `wx.login` 获取 code，后端使用相同 AppID 和 AppSecret 调用 `code2Session`。未绑定用户获得 10 分钟有效的 bind token，只允许绑定 6 位以上纯数字院院通用户 ID。
 
-```text
-mysql > cos-json > memory
+业务 Access Token 只包含 `user_id`、类型、签发时间和过期时间。后端每次请求都从远程状态读取用户；用户记录不存在时返回 401，不会根据旧 Token 恢复绑定。
+
+首页和详情接口始终覆盖客户端传入的 userId，只查询当前登录用户绑定的院院通 ID。
+
+## 状态与并发
+
+远程状态格式为 v2。所有修改通过业务接口进入 Linux 状态服务，并在单一写队列中执行。服务先写临时文件并同步磁盘，再将旧文件移动为 `.bak`，最后原子替换主文件。
+
+云托管不允许整份 PUT 状态。多个云托管实例并行绑定、订阅、导入时，不会基于过期副本覆盖其他修改。
+
+## 批次与提醒
+
+每次同步生成 `batch_id`。Linux 先保存完整快照，云托管只接收：
+
+```json
+{ "batch_id": "批次号", "trigger_reminders": true }
 ```
 
-Current recommended mode:
+状态服务原子 claim 批次；重复 batch_id 直接返回已处理状态。每条微信发送还会使用 `batch_id:user_id:snapshot_id:template_id` 作为发送键，在调用微信前占位，避免不确定结果被自动重复发送。
 
-```env
-STORAGE_MODE=remote-json
-REMOTE_STATE_API_BASE_URL=https://your-linux-state-domain
-REMOTE_STATE_TOKEN=...
-```
-
-The Linux JSON file stores only current operational state:
-
-- User binding records
-- Subscription authorization state
-- Latest todo snapshots
-- Recent import runs
-- Recent reminder send logs
-
-It does not keep long-term history.
-
-## Reminder Design
-
-WeChat reminders use Mini Program subscription messages:
-
-1. User taps the subscribe button in the Mini Program.
-2. Mini Program calls `wx.requestSubscribeMessage`.
-3. Backend saves the accepted template ID and increments `remaining_count`.
-4. After each successful import, backend finds users whose bound YYT ID matches a pending snapshot.
-5. Backend sends a subscription message only when `pendingCount > 0` and `remaining_count > 0`.
-6. On successful send, backend decrements `remaining_count`.
-
-Template IDs and app secrets must be configured on the backend through environment variables, not hardcoded in frontend code.
+订阅通过一次性 request_id 提交。后端只接受配置中的模板 ID，并按模板分别累计、扣减可用次数。

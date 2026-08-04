@@ -26,7 +26,7 @@ function tick() {
 }
 
 function start() {
-  if (!config.reminderSchedule.enabled || timer) return;
+  if (!config.mockMode || !config.reminderSchedule.enabled || timer) return;
   console.log(`[reminder-scheduler] enabled at ${config.reminderSchedule.times.join(', ')} (${config.reminderSchedule.timeZone})`);
   tick();
   timer = setInterval(tick, config.reminderSchedule.pollMs);

@@ -85,12 +85,12 @@ function filterAndPage(items, query) {
   };
 }
 
-async function saveSnapshots(items, importedAt) {
+async function saveSnapshots(items, importedAt, batchId) {
   const normalized = normalizeItems(items);
   const currentImportedAt = importedAt || new Date().toISOString();
   const stateStore = activeStateStore();
   if (stateStore) {
-    return stateStore.saveSnapshots(normalized, currentImportedAt);
+    return stateStore.saveSnapshots(normalized, currentImportedAt, batchId);
   }
   memoryItems = normalized;
   memoryImportedAt = currentImportedAt;

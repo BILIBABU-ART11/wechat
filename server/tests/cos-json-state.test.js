@@ -14,6 +14,7 @@ process.env.APP_TOKEN_SECRET = 'test-token-secret';
 process.env.WECHAT_APP_ID = 'test-app-id';
 process.env.WECHAT_APP_SECRET = 'test-app-secret';
 process.env.WECHAT_SUBSCRIBE_TEMPLATE_ID = 'test-template-id';
+process.env.WECHAT_SUBSCRIBE_TEMPLATE_FIELDS = '{"title":"thing1","count":"number2","content":"thing3","date":"date4"}';
 process.env.REMINDER_SCHEDULE_ENABLED = 'false';
 delete process.env.MYSQL_ADDRESS;
 delete process.env.MYSQL_USERNAME;

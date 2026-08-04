@@ -357,22 +357,6 @@ function route(options) {
     });
   }
 
-  if (method === 'POST' && url === '/api/reminders/run') {
-    return ok({
-      skipped: false,
-      trigger: 'manual',
-      fetched_count: articles.length,
-      pending_count: articles.length,
-      message_count: articles.length,
-      recipient_count: currentUser ? 1 : 0,
-      sent_count: 0,
-      skipped_send_count: articles.length
-    });
-  }
-
-  if (method === 'POST' && url === '/api/webhooks/feishu-record-created') {
-    return ok({ received: true, message_created: true });
-  }
 
   return fail(404, `Mock endpoint not found: ${method} ${url}`);
 }

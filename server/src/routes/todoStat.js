@@ -1,8 +1,8 @@
 const express = require('express');
 const { authenticate } = require('../middleware/auth');
+const { authenticateImport } = require('../middleware/importAuth');
 const config = require('../config');
 const store = require('../services/mockStore');
-const accountStore = require('../services/accountStore');
 const todoStatService = require('../services/todoStatService');
 const reminderJobService = require('../services/reminderJobService');
 
@@ -35,39 +35,19 @@ router.get('/snapshots', authenticate, async (req, res, next) => {
   }
 });
 
-function readImportToken(req) {
-  const header = req.headers.authorization || '';
-  const bearer = header.replace(/^Bearer\s+/i, '').trim();
-  return bearer || req.headers['x-import-token'] || '';
-}
-
-router.post('/import', async (req, res, next) => {
-  const startedAt = new Date().toISOString();
+router.post('/import', authenticateImport, async (req, res, next) => {
   try {
-    if (!config.todoImportToken) {
-      res.status(500).json({ code: 500, message: 'TODO_IMPORT_TOKEN is not configured', data: null });
-      return;
+    const payload = req.body || {};
+    const batchId = String(payload.batch_id || '').trim();
+    if (!batchId || payload.data || payload.items) {
+      const error = new Error('Only a small batch trigger with batch_id is accepted.');
+      error.status = 422;
+      throw error;
     }
-    if (readImportToken(req) !== config.todoImportToken) {
-      res.status(401).json({ code: 401, message: 'invalid import token', data: null });
-      return;
-    }
-    const importResult = await todoStatService.importSnapshots(req.body || {});
-    let reminderResult = null;
-    if (req.body && req.body.trigger_reminders) {
-      reminderResult = await reminderJobService.runReminderJob('import');
-    }
-    if (!config.mockMode) {
-      await accountStore.recordImportRun({
-        status: 'success',
-        source: (req.body && req.body.meta && req.body.meta.source) || 'todo-stat-snapshots',
-        imported_count: importResult.imported_count,
-        storage: importResult.storage,
-        started_at: startedAt,
-        finished_at: new Date().toISOString(),
-        meta: req.body && req.body.meta
-      });
-    }
+    const importResult = await todoStatService.getCurrentImportedBatch(batchId);
+    const reminderResult = payload.trigger_reminders
+      ? await reminderJobService.processReminderBatch(batchId, 'import')
+      : null;
     res.json({
       code: 0,
       message: 'ok',
@@ -77,22 +57,6 @@ router.post('/import', async (req, res, next) => {
       }
     });
   } catch (error) {
-    if (!config.mockMode) {
-      try {
-        await accountStore.recordImportRun({
-          status: 'failed',
-          source: (req.body && req.body.meta && req.body.meta.source) || 'todo-stat-snapshots',
-          imported_count: 0,
-          storage: '',
-          started_at: startedAt,
-          finished_at: new Date().toISOString(),
-          meta: req.body && req.body.meta,
-          error_message: error.message
-        });
-      } catch (logError) {
-        console.error('[todo-import] failed to write import log', logError);
-      }
-    }
     next(error);
   }
 });

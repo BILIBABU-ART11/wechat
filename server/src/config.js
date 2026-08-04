@@ -16,16 +16,30 @@ function readList(value) {
 
 function readMysqlAddress(value) {
   const [host, port] = String(value || '').split(':');
-  return {
-    host: host || '',
-    port: Number(port || 3306)
-  };
+  return { host: host || '', port: Number(port || 3306) };
+}
+
+function readJsonObject(value) {
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function validateTemplateFields(fields) {
+  const required = ['title', 'count', 'content', 'date'];
+  const pattern = /^(thing|number|date|time|character_string)\d+$/;
+  return required.every((key) => typeof fields[key] === 'string' && pattern.test(fields[key]));
 }
 
 const mysqlAddress = readMysqlAddress(process.env.MYSQL_ADDRESS);
 const mockMode = readBool(process.env.MOCK_MODE, true);
+const templateFields = readJsonObject(process.env.WECHAT_SUBSCRIBE_TEMPLATE_FIELDS);
 
-module.exports = {
+const config = {
   port: Number(process.env.PORT || 3000),
   mockMode,
   allowedOrigins: process.env.ALLOWED_ORIGINS || '*',
@@ -40,18 +54,9 @@ module.exports = {
     region: process.env.COS_REGION || '',
     stateKey: process.env.COS_STATE_KEY || 'yyt/yyt-state.json',
     stateFile: process.env.COS_STATE_FILE || process.env.JSON_STATE_FILE || '',
-    secretId: process.env.COS_SECRET_ID
-      || process.env.TENCENTCLOUD_SECRETID
-      || process.env.TENCENTCLOUD_SECRET_ID
-      || '',
-    secretKey: process.env.COS_SECRET_KEY
-      || process.env.TENCENTCLOUD_SECRETKEY
-      || process.env.TENCENTCLOUD_SECRET_KEY
-      || '',
-    sessionToken: process.env.COS_SESSION_TOKEN
-      || process.env.TENCENTCLOUD_SESSIONTOKEN
-      || process.env.TENCENTCLOUD_TOKEN
-      || ''
+    secretId: process.env.COS_SECRET_ID || process.env.TENCENTCLOUD_SECRETID || process.env.TENCENTCLOUD_SECRET_ID || '',
+    secretKey: process.env.COS_SECRET_KEY || process.env.TENCENTCLOUD_SECRETKEY || process.env.TENCENTCLOUD_SECRET_KEY || '',
+    sessionToken: process.env.COS_SESSION_TOKEN || process.env.TENCENTCLOUD_SESSIONTOKEN || process.env.TENCENTCLOUD_TOKEN || ''
   },
   remoteState: {
     baseUrl: process.env.REMOTE_STATE_API_BASE_URL || '',
@@ -77,7 +82,9 @@ module.exports = {
     appId: process.env.WECHAT_APP_ID || '',
     appSecret: process.env.WECHAT_APP_SECRET || '',
     subscribeTemplateId: process.env.WECHAT_SUBSCRIBE_TEMPLATE_ID || '',
-    templatePage: process.env.WECHAT_SUBSCRIBE_TEMPLATE_PAGE || 'pages/index/index'
+    templatePage: process.env.WECHAT_SUBSCRIBE_TEMPLATE_PAGE || 'pages/index/index',
+    templateFields,
+    templateFieldsValid: validateTemplateFields(templateFields)
   },
   feishu: {
     appId: process.env.FEISHU_APP_ID || '',
@@ -94,3 +101,26 @@ module.exports = {
   },
   subscribeTemplateIds: readList(process.env.SUBSCRIBE_TEMPLATE_IDS)
 };
+
+config.readiness = function readiness() {
+  if (config.mockMode) return { ready: true, reasons: [] };
+  const reasons = [];
+  if (!config.tokenSecret || config.tokenSecret === 'mock-secret') reasons.push('APP_TOKEN_SECRET is missing');
+  if (!config.todoImportToken) reasons.push('TODO_IMPORT_TOKEN is missing');
+  if (!config.wechat.appId) reasons.push('WECHAT_APP_ID is missing');
+  if (!config.wechat.appSecret) reasons.push('WECHAT_APP_SECRET is missing');
+  if (!config.wechat.subscribeTemplateId && !config.subscribeTemplateIds.length) reasons.push('WECHAT_SUBSCRIBE_TEMPLATE_ID is missing');
+  if (!config.wechat.templateFieldsValid) reasons.push('WECHAT_SUBSCRIBE_TEMPLATE_FIELDS is invalid');
+  if (config.storage.mode === 'remote-json' && (!config.remoteState.baseUrl || !config.remoteState.token)) {
+    reasons.push('remote JSON storage is incomplete');
+  }
+  return { ready: reasons.length === 0, reasons };
+};
+
+config.assertStartup = function assertStartup() {
+  if (!config.mockMode && (!config.tokenSecret || config.tokenSecret === 'mock-secret')) {
+    throw new Error('APP_TOKEN_SECRET must be configured for production.');
+  }
+};
+
+module.exports = config;

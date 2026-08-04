@@ -1,5 +1,8 @@
 const assert = require('assert');
 process.env.MOCK_MODE = 'true';
+process.env.TODO_IMPORT_TOKEN = 'test-import-token';
+process.env.WECHAT_SUBSCRIBE_TEMPLATE_ID = 'test-template-id';
+process.env.WECHAT_SUBSCRIBE_TEMPLATE_FIELDS = '{"title":"thing1","count":"number2","content":"thing3","date":"date4"}';
 const app = require('../src/app');
 const store = require('../src/services/mockStore');
 
@@ -81,31 +84,50 @@ async function run() {
       assert.strictEqual(read.read, true);
     }
 
+    const subscribeConfig = await request(baseUrl, 'GET', '/subscribe/config', null, token);
+    assert.deepStrictEqual(subscribeConfig.template_ids, ['test-template-id']);
+    assert.ok(subscribeConfig.request_id);
     const subscription = await request(baseUrl, 'POST', '/subscribe', {
-      accepted: true,
-      mock: true,
-      template_ids: []
+      request_id: subscribeConfig.request_id,
+      raw: { 'test-template-id': 'accept' }
     }, token);
     assert.strictEqual(subscription.enabled, true);
-
-    const subscribeConfig = await request(baseUrl, 'GET', '/subscribe/config', null, token);
-    assert.ok(Array.isArray(subscribeConfig.template_ids));
 
     const todoSnapshots = await request(baseUrl, 'GET', '/todo-stat/snapshots?page=1&pageSize=5', null, token);
     assert.ok(Array.isArray(todoSnapshots.items));
 
+    const rejectedFullImport = await fetch(baseUrl + '/todo-stat/import', {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer test-import-token',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ batch_id: 'legacy-full-body', items: [] })
+    });
+    assert.strictEqual(rejectedFullImport.status, 422);
+
     const reminderStatus = await request(baseUrl, 'GET', '/reminders/status', null, token);
     assert.strictEqual(reminderStatus.schedule_enabled, true);
 
-    const reminderRun = await request(baseUrl, 'POST', '/reminders/run', null, token);
+    const deniedReminder = await fetch(`${baseUrl}/reminders/run`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ batch_id: 'mock-batch' })
+    });
+    assert.strictEqual(deniedReminder.status, 401);
+
+    const reminderRun = await request(baseUrl, 'POST', '/reminders/run', {
+      batch_id: 'mock-batch'
+    }, 'test-import-token');
     assert.strictEqual(reminderRun.skipped, false);
     assert.ok(reminderRun.fetched_count >= 1);
 
-    const webhook = await request(baseUrl, 'POST', '/webhooks/feishu-record-created', {
-      title: '测试招投标进度提醒',
-      content: '新增记录触发站内提醒'
+    const webhook = await fetch(`${baseUrl}/webhooks/feishu-record-created`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{}'
     });
-    assert.strictEqual(webhook.received, true);
+    assert.strictEqual(webhook.status, 404);
     console.log('All API smoke tests passed.');
   } finally {
     await new Promise((resolve) => server.close(resolve));

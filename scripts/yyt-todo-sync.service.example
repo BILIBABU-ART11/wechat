@@ -1,0 +1,14 @@
+[Unit]
+Description=YYT Todo Sync Job
+After=network-online.target yyt-remote-state.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=yyt
+Group=yyt
+WorkingDirectory=/opt/NeuroGaze_MiniProgram
+EnvironmentFile=/etc/yyt-todo-sync.env
+ExecStart=/usr/bin/node scripts/sync-todo-to-cloud.js
+TimeoutStartSec=15min
+UMask=0077

@@ -61,7 +61,7 @@ Page({
   subscribeReminder() {
     if (!authGuard.requireLogin()) return;
     api.getSubscribeConfig()
-      .then((config) => permission.requestReminderSubscribe(config.template_ids || []))
+      .then((config) => permission.requestReminderSubscribe(config))
       .then((result) => api.subscribeReminder(result))
       .then((state) => {
         storage.setSubscribeState(state);

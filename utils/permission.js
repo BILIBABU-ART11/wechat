@@ -1,13 +1,17 @@
 const { SUBSCRIBE_TEMPLATE_IDS } = require('./constants');
 
-function requestReminderSubscribe(tmplIds) {
-  const templateIds = tmplIds || SUBSCRIBE_TEMPLATE_IDS;
-  if (!templateIds.length || typeof wx === 'undefined' || !wx.requestSubscribeMessage) {
+function requestReminderSubscribe(config) {
+  const options = config && !Array.isArray(config) ? config : {};
+  const templateIds = Array.isArray(config)
+    ? config
+    : (options.template_ids || SUBSCRIBE_TEMPLATE_IDS);
+  const requestId = options.request_id || '';
+
+  if (!templateIds.length || !requestId || typeof wx === 'undefined' || !wx.requestSubscribeMessage) {
     return Promise.resolve({
-      accepted: false,
-      mock: false,
-      template_ids: templateIds,
-      reason: 'no_template_ids'
+      request_id: requestId,
+      raw: {},
+      reason: 'subscription_config_incomplete'
     });
   }
 
@@ -15,25 +19,17 @@ function requestReminderSubscribe(tmplIds) {
     wx.requestSubscribeMessage({
       tmplIds: templateIds,
       success(result) {
-        resolve({
-          accepted: templateIds.some((id) => result[id] === 'accept'),
-          mock: false,
-          template_ids: templateIds,
-          raw: result
-        });
+        resolve({ request_id: requestId, raw: result });
       },
       fail(error) {
         resolve({
-          accepted: false,
-          mock: false,
-          template_ids: templateIds,
-          error
+          request_id: requestId,
+          raw: {},
+          error: error && error.errMsg ? error.errMsg : 'requestSubscribeMessage failed'
         });
       }
     });
   });
 }
 
-module.exports = {
-  requestReminderSubscribe
-};
+module.exports = { requestReminderSubscribe };

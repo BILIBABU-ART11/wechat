@@ -1,18 +1,21 @@
 [Unit]
 Description=YYT Remote JSON State Service
-After=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
+User=yyt
+Group=yyt
 WorkingDirectory=/opt/NeuroGaze_MiniProgram
-Environment=NODE_ENV=production
-Environment=REMOTE_STATE_HOST=127.0.0.1
-Environment=REMOTE_STATE_PORT=3100
-Environment=REMOTE_STATE_FILE=/opt/yyt-state/yyt-state.json
-Environment=REMOTE_STATE_TOKEN=replace-with-strong-remote-state-token
+EnvironmentFile=/etc/yyt-remote-state.env
 ExecStart=/usr/bin/node scripts/remote-state-server.js
 Restart=always
 RestartSec=5
+UMask=0077
+ReadWritePaths=/opt/yyt-state
+NoNewPrivileges=true
+PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target

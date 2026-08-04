@@ -48,9 +48,6 @@ function getReminderStatus() {
   return request.get('/api/reminders/status');
 }
 
-function runReminderJob() {
-  return request.post('/api/reminders/run', {}, { showLoading: true });
-}
 
 function getCurrentUser() {
   return request.get('/api/user/me');
@@ -67,6 +64,5 @@ module.exports = {
   getSubscribeConfig,
   getTodoSnapshots,
   getReminderStatus,
-  runReminderJob,
   getCurrentUser
 };

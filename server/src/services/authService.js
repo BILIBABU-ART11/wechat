@@ -29,9 +29,17 @@ function issueToken(type, payload, ttlMs) {
   return `${body}.${sign(body)}`;
 }
 
+function signaturesMatch(body, signature) {
+  const expected = Buffer.from(sign(body));
+  const actual = Buffer.from(String(signature || ''));
+  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+}
+
 function verifyToken(token, expectedType) {
-  const [body, signature] = String(token || '').split('.');
-  if (!body || !signature || sign(body) !== signature) return null;
+  const parts = String(token || '').split('.');
+  if (parts.length !== 2) return null;
+  const [body, signature] = parts;
+  if (!body || !signature || !signaturesMatch(body, signature)) return null;
   let payload;
   try {
     payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
@@ -48,9 +56,6 @@ async function code2Session(code) {
   if (!config.wechat.appId || !config.wechat.appSecret) {
     throw createHttpError(500, 'WECHAT_APP_ID and WECHAT_APP_SECRET must be configured.');
   }
-  if (typeof fetch !== 'function') {
-    throw createHttpError(500, 'Current Node.js runtime does not support fetch.');
-  }
   const url = new URL('https://api.weixin.qq.com/sns/jscode2session');
   url.searchParams.set('appid', config.wechat.appId);
   url.searchParams.set('secret', config.wechat.appSecret);
@@ -66,17 +71,16 @@ async function code2Session(code) {
       throw createHttpError(502, payload.errmsg || 'WeChat code2Session failed.');
     }
     return payload;
+  } catch (error) {
+    if (error.name === 'AbortError') throw createHttpError(504, 'WeChat login request timed out.');
+    throw error;
   } finally {
     clearTimeout(timeout);
   }
 }
 
 function accessTokenForUser(user) {
-  return issueToken('access', {
-    user_id: user.id,
-    openid: user.openid,
-    internal_account: user.internal_account
-  }, 30 * 24 * 60 * 60 * 1000);
+  return issueToken('access', { user_id: user.id }, 30 * 24 * 60 * 60 * 1000);
 }
 
 async function wechatLogin(code) {
@@ -109,24 +113,39 @@ async function bindAccount(payload) {
     throw createHttpError(401, '绑定会话已失效，请重新微信登录');
   }
   const user = await accountStore.bindUser(bindPayload.openid, bindValue);
-  return {
-    token: accessTokenForUser(user),
-    user
-  };
+  return { token: accessTokenForUser(user), user };
 }
 
 async function resolveUserByToken(token) {
   if (config.mockMode) return mockStore.resolveUserByToken(token);
   const payload = verifyToken(token, 'access');
   if (!payload || !payload.user_id) return null;
-  const user = await accountStore.findUserById(payload.user_id);
-  if (user) return user;
-  if (!payload.internal_account || !payload.openid) return null;
-  return accountStore.bindUser(payload.openid, payload.internal_account);
+  return accountStore.findUserById(payload.user_id);
+}
+
+function issueSubscribeRequest(userId, templateIds) {
+  return issueToken('subscribe', {
+    user_id: userId,
+    template_ids: templateIds,
+    nonce: crypto.randomUUID()
+  }, 10 * 60 * 1000);
+}
+
+function verifySubscribeRequest(token, userId) {
+  const payload = verifyToken(token, 'subscribe');
+  if (!payload || payload.user_id !== userId || !payload.nonce) {
+    throw createHttpError(401, '订阅请求已失效，请重新发起订阅');
+  }
+  return payload;
 }
 
 module.exports = {
   wechatLogin,
   bindAccount,
-  resolveUserByToken
+  resolveUserByToken,
+  issueSubscribeRequest,
+  verifySubscribeRequest,
+  issueToken,
+  verifyToken,
+  accessTokenForUser
 };

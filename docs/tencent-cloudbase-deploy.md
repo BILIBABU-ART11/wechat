@@ -1,155 +1,57 @@
-# 腾讯云托管上线配置
+# 腾讯云托管部署
 
-## 后端部署
+选择 Express.js，容器端口保持 80。根目录的 Dockerfile、package.json 和 index.js 可直接用于构建。
 
-本项目是 Express.js 后端，腾讯云托管语言模板选择 **Express.js**。
+## 环境变量
 
-仓库根目录已经提供：
+使用 [env-example.md](env-example.md) 中的腾讯云托管 JSON。必须配置：
+
+- `APP_TOKEN_SECRET`
+- `TODO_IMPORT_TOKEN`
+- `REMOTE_STATE_API_BASE_URL`
+- `REMOTE_STATE_TOKEN`
+- `WECHAT_APP_ID=wx964c3e4ac820ac37`
+- `WECHAT_APP_SECRET`
+- `WECHAT_SUBSCRIBE_TEMPLATE_ID`
+- `WECHAT_SUBSCRIBE_TEMPLATE_FIELDS`
+
+保持：
 
 ```text
-Dockerfile
-container.config.json
-package.json
-index.js
+MOCK_MODE=false
+TODO_DATA_SOURCE=import
+STORAGE_MODE=remote-json
+REMINDER_SCHEDULE_ENABLED=false
 ```
 
-根目录启动时会加载 `server/src/index.js`。云托管端口建议保持：
+服务启动时缺少 `APP_TOKEN_SECRET` 会直接退出。其他关键配置缺失时，`/health` 返回 503 和缺失项，避免“部署成功但提醒不可用”。
 
-```text
-80
-```
+## 部署顺序
 
-## 推荐环境变量
+1. 备份 Linux 的 `yyt-state.json`。
+2. 先更新并重启 Linux 状态服务。
+3. 确认状态服务 `/health` 返回 version 2。
+4. 配置云托管环境变量。
+5. 推送 GitHub，等待流水线部署。
+6. 访问云托管 `/health`，确认 `ready=true`。
+7. 手动运行一次 Linux 同步 service。
+8. 真机登录、绑定、订阅并检查提醒。
 
-正式环境默认使用 Linux `remote-json` 保存状态，不需要配置 MySQL 或 COS。
+## 小程序配置
 
-```json
-{
-  "PORT": "80",
-  "NODE_ENV": "production",
-  "MOCK_MODE": "false",
-  "ALLOWED_ORIGINS": "*",
-  "ENABLE_EGRESS_IP_CHECK": "false",
-
-  "TODO_DATA_SOURCE": "import",
-  "TODO_IMPORT_TOKEN": "替换为强随机导入密钥",
-
-  "STORAGE_MODE": "remote-json",
-  "REMOTE_STATE_API_BASE_URL": "https://你的Linux状态服务域名",
-  "REMOTE_STATE_TOKEN": "替换为强随机远程状态密钥",
-  "REMOTE_STATE_TIMEOUT_MS": "10000",
-
-  "REMINDER_SCHEDULE_ENABLED": "false",
-  "REMINDER_SCHEDULE_TIMES": "09:20,17:20",
-  "REMINDER_TIME_ZONE": "Asia/Shanghai",
-  "REMINDER_SCHEDULE_POLL_MS": "60000",
-  "REMINDER_FETCH_PAGE_SIZE": "100",
-  "REMINDER_SEND_ONLY_PENDING": "true",
-
-  "WECHAT_APP_ID": "wx964c3e4ac820ac37",
-  "WECHAT_APP_SECRET": "微信公众平台获取的 AppSecret",
-  "WECHAT_SUBSCRIBE_TEMPLATE_ID": "订阅消息模板ID",
-  "WECHAT_SUBSCRIBE_TEMPLATE_PAGE": "pages/index/index",
-
-  "SUBSCRIBE_TEMPLATE_IDS": "",
-  "APP_TOKEN_SECRET": "替换为强随机业务Token密钥"
-}
-```
-
-说明：
-
-- `TODO_DATA_SOURCE=import` 表示云托管只读取固定 IP 服务器导入的数据。
-- `STORAGE_MODE=remote-json` 表示用户绑定、订阅状态、最新待办和最近日志保存到 Linux JSON 状态服务。
-- `REMINDER_SCHEDULE_ENABLED=false` 表示云托管不自己定时拉取，避免和固定 IP 服务器重复触发。
-- 固定 IP 服务器导入数据时会带 `trigger_reminders=true`，导入成功后自动触发提醒发送。
-- `TODO_IMPORT_TOKEN` 必须和固定 IP 服务器脚本中的值一致。
-
-## Linux 状态服务
-
-Linux 服务器需要常驻运行：
+仓库 AppID 已固定为 `wx964c3e4ac820ac37`。上传前执行：
 
 ```bash
-cd /path/to/NeuroGaze_MiniProgram
-export REMOTE_STATE_TOKEN="与云托管 REMOTE_STATE_TOKEN 一致"
-export REMOTE_STATE_FILE="/opt/yyt-state/yyt-state.json"
-export REMOTE_STATE_PORT=3100
-node scripts/remote-state-server.js
+npm run preflight
 ```
 
-建议在 Linux 上用 Nginx 反向代理到 `127.0.0.1:3100` 并配置 HTTPS。云托管只需要能访问 `REMOTE_STATE_API_BASE_URL`。
-
-## COS 可选备选
-
-如果后续不想让 Linux 服务器承担状态服务，也可以切回 COS JSON：
-
-```json
-{
-  "STORAGE_MODE": "cos-json",
-  "COS_BUCKET": "你的COS_BUCKET",
-  "COS_REGION": "ap-shanghai",
-  "COS_STATE_KEY": "yyt/yyt-state.json",
-  "COS_SECRET_ID": "腾讯云 SecretId",
-  "COS_SECRET_KEY": "腾讯云 SecretKey"
-}
-```
-
-密钥只能放在云托管环境变量里，不要提交到 GitHub。
-
-## MySQL 可选
-
-MySQL 不是当前推荐必需项。只有后续需要长期历史、报表、多人高频写入时再配置：
-
-```json
-{
-  "MYSQL_ADDRESS": "云托管MySQL地址，例如 10.x.x.x:3306",
-  "MYSQL_USERNAME": "root",
-  "MYSQL_PASSWORD": "云托管MySQL密码",
-  "MYSQL_DATABASE": "nodejs_demo"
-}
-```
-
-存储优先级为：`mysql > remote-json > cos-json > memory`。
-
-## 小程序域名配置
-
-云托管部署成功后，把 HTTPS 域名配置到微信公众平台：
-
-```text
-开发管理 -> 开发设置 -> 服务器域名 -> request 合法域名
-```
-
-小程序端的云托管地址在：
-
-```text
-utils/constants.js
-```
-
-确认 `API_BASE_URLS.cloud` 是当前云托管域名，并保持：
-
-```js
-const API_ENV = 'cloud';
-```
+还需要在微信公众平台把云托管 HTTPS 地址加入 request 合法域名。Linux 状态服务域名不放入小程序合法域名，因为小程序不会直接访问它。
 
 ## 健康检查
 
-后端健康检查：
-
 ```text
-https://你的云托管域名/health
+GET https://你的云托管域名/health
+GET https://你的Linux状态服务域名/health
 ```
 
-查看同步和提醒状态需要登录后调用：
-
-```text
-GET /api/reminders/status
-```
-
-临时排查出口 IP 时才开启：
-
-```json
-{
-  "ENABLE_EGRESS_IP_CHECK": "true"
-}
-```
-
-排查结束后改回 `false` 并重新部署。
+`POST /api/reminders/run` 和 `POST /api/todo-stat/import` 都使用 `TODO_IMPORT_TOKEN`，不能使用普通用户 Token。飞书 webhook 已删除。

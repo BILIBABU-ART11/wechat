@@ -1,63 +1,51 @@
-# Environment Example
+# 环境变量
 
-Backend environment variables should live in `server/.env` locally, or in Tencent CloudBase environment variables in production. Do not commit real secret values.
+## 腾讯云托管
 
-## CloudBase Production
+```json
+{
+  "PORT": "80",
+  "NODE_ENV": "production",
+  "MOCK_MODE": "false",
+  "ALLOWED_ORIGINS": "*",
+  "ENABLE_EGRESS_IP_CHECK": "false",
+
+  "TODO_DATA_SOURCE": "import",
+  "TODO_IMPORT_TOKEN": "替换为强随机导入密钥",
+
+  "STORAGE_MODE": "remote-json",
+  "REMOTE_STATE_API_BASE_URL": "https://你的Linux状态服务域名",
+  "REMOTE_STATE_TOKEN": "替换为强随机远程状态密钥",
+  "REMOTE_STATE_TIMEOUT_MS": "10000",
+
+  "REMINDER_SCHEDULE_ENABLED": "false",
+  "REMINDER_TIME_ZONE": "Asia/Shanghai",
+  "REMINDER_FETCH_PAGE_SIZE": "100",
+  "REMINDER_SEND_ONLY_PENDING": "true",
+
+  "WECHAT_APP_ID": "wx964c3e4ac820ac37",
+  "WECHAT_APP_SECRET": "微信公众平台AppSecret",
+  "WECHAT_SUBSCRIBE_TEMPLATE_ID": "微信订阅消息模板ID",
+  "WECHAT_SUBSCRIBE_TEMPLATE_PAGE": "pages/index/index",
+  "WECHAT_SUBSCRIBE_TEMPLATE_FIELDS": "{\"title\":\"thing1\",\"count\":\"number2\",\"content\":\"thing3\",\"date\":\"date4\"}",
+
+  "APP_TOKEN_SECRET": "替换为强随机业务Token密钥"
+}
+```
+
+`WECHAT_SUBSCRIBE_TEMPLATE_FIELDS` 的值必须和微信公众平台模板详情中的字段名完全一致。
+
+## Linux 状态服务
+
+将 `scripts/yyt-remote-state.env.example` 复制到 `/etc/yyt-remote-state.env`，填入与云托管一致的 `REMOTE_STATE_TOKEN`。
+
+## Linux 同步任务
+
+将 `scripts/yyt-todo-sync.env.example` 复制到 `/etc/yyt-todo-sync.env`，填写院院通 API Key、云托管地址、导入密钥和状态服务地址。
+
+两个环境文件不得提交 GitHub，建议权限：
 
 ```bash
-PORT=80
-NODE_ENV=production
-MOCK_MODE=false
-ALLOWED_ORIGINS=*
-ENABLE_EGRESS_IP_CHECK=false
-
-TODO_DATA_SOURCE=import
-TODO_IMPORT_TOKEN=replace-with-import-token
-
-STORAGE_MODE=remote-json
-REMOTE_STATE_API_BASE_URL=https://your-linux-state-domain
-REMOTE_STATE_TOKEN=replace-with-remote-state-token
-REMOTE_STATE_TIMEOUT_MS=10000
-
-REMINDER_SCHEDULE_ENABLED=false
-REMINDER_SCHEDULE_TIMES=09:20,17:20
-REMINDER_TIME_ZONE=Asia/Shanghai
-
-WECHAT_APP_ID=wx964c3e4ac820ac37
-WECHAT_APP_SECRET=replace-with-wechat-app-secret
-WECHAT_SUBSCRIBE_TEMPLATE_ID=replace-with-template-id
-APP_TOKEN_SECRET=replace-with-a-strong-secret
+sudo chown root:yyt /etc/yyt-remote-state.env /etc/yyt-todo-sync.env
+sudo chmod 640 /etc/yyt-remote-state.env /etc/yyt-todo-sync.env
 ```
-
-Linux remote state server:
-
-```bash
-export REMOTE_STATE_TOKEN="same-as-cloudbase"
-export REMOTE_STATE_FILE="/opt/yyt-state/yyt-state.json"
-export REMOTE_STATE_PORT=3100
-node scripts/remote-state-server.js
-```
-
-## Fixed IP Server
-
-```bash
-export TODO_API_KEY="replace-with-yyt-api-key"
-export CLOUD_API_BASE_URL="https://your-cloudbase-domain"
-export TODO_IMPORT_TOKEN="same-as-cloudbase"
-export REMOTE_STATE_API_BASE_URL="https://your-linux-state-domain"
-export REMOTE_STATE_TOKEN="same-as-cloudbase-remote-state-token"
-export TODO_SYNC_LOG_DIR="/var/log/yyt-todo-sync"
-```
-
-## Frontend
-
-Frontend placeholders live in `utils/constants.js`:
-
-```js
-REQUEST_MODE: 'backend'
-MOCK_ENABLED: false
-ENABLE_MOCK_FALLBACK: true
-API_BASE_URLS.cloud: 'https://your-cloudbase-domain'
-```
-
-Only public routing/config values belong in the frontend. Secrets belong in backend environment variables.

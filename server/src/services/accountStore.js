@@ -340,9 +340,9 @@ async function listReminderRecipients() {
   }));
 }
 
-async function consumeSubscription(userId) {
+async function consumeSubscription(userId, templateId, disable) {
   const stateStore = activeStateStore();
-  if (stateStore) return stateStore.consumeSubscription(userId);
+  if (stateStore) return stateStore.consumeSubscription(userId, templateId, disable);
   if (usingMemory()) {
     const current = memory.subscriptions[userId];
     if (!current) return;
@@ -489,6 +489,36 @@ async function getLastReminderSend(userId) {
   };
 }
 
+async function claimImportBatch(batchId, payload) {
+  if (usingRemoteState()) return remoteStateStore.claimImportBatch(batchId, payload);
+  return { claimed: true, batch: { batch_id: batchId, status: 'processing' } };
+}
+
+async function completeImportBatch(batchId, payload) {
+  if (usingRemoteState()) return remoteStateStore.completeImportBatch(batchId, payload);
+  return payload;
+}
+
+async function claimReminderSend(payload) {
+  if (usingRemoteState()) return remoteStateStore.claimReminderSend(payload);
+  const existing = memory.sendLogs.find((item) => item.send_key === payload.send_key);
+  if (existing) return { claimed: false, send: existing };
+  const record = Object.assign({}, payload, {
+    status: 'attempting',
+    sent: false,
+    created_at: new Date().toISOString()
+  });
+  memory.sendLogs.unshift(record);
+  return { claimed: true, send: record };
+}
+
+async function completeReminderSend(payload) {
+  if (usingRemoteState()) return remoteStateStore.completeReminderSend(payload);
+  await recordReminderSend(payload);
+  if (payload.sent) await consumeSubscription(payload.user_id, payload.template_id, false);
+  else if (payload.disable) await consumeSubscription(payload.user_id, payload.template_id, true);
+  return payload;
+}
 module.exports = {
   ensureTables,
   findUserByOpenid,
@@ -498,6 +528,10 @@ module.exports = {
   getSubscription,
   listReminderRecipients,
   consumeSubscription,
+  claimImportBatch,
+  completeImportBatch,
+  claimReminderSend,
+  completeReminderSend,
   recordImportRun,
   getLastImportRun,
   recordReminderSend,

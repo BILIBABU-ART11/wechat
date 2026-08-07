@@ -32,7 +32,10 @@ function readJsonObject(value) {
 function validateTemplateFields(fields) {
   const required = ['title', 'count', 'content', 'date'];
   const pattern = /^(thing|number|date|time|character_string)\d+$/;
-  return required.every((key) => typeof fields[key] === 'string' && pattern.test(fields[key]));
+  const legacyValid = required.every((key) => typeof fields[key] === 'string' && pattern.test(fields[key]));
+  const reminderValid = /^time\d+$/.test(fields.time || '') && /^thing\d+$/.test(fields.content || '');
+  const values = reminderValid ? [fields.time, fields.content] : required.map((key) => fields[key]);
+  return (legacyValid || reminderValid) && new Set(values).size === values.length;
 }
 
 const mysqlAddress = readMysqlAddress(process.env.MYSQL_ADDRESS);
@@ -102,13 +105,20 @@ const config = {
   subscribeTemplateIds: readList(process.env.SUBSCRIBE_TEMPLATE_IDS)
 };
 
+config.wechatLoginReadiness = function wechatLoginReadiness() {
+  if (config.mockMode) return { ready: true, reasons: [] };
+  const reasons = [];
+  if (!config.wechat.appId) reasons.push('WECHAT_APP_ID');
+  if (!config.wechat.appSecret) reasons.push('WECHAT_APP_SECRET');
+  return { ready: reasons.length === 0, reasons };
+};
+
 config.readiness = function readiness() {
   if (config.mockMode) return { ready: true, reasons: [] };
   const reasons = [];
   if (!config.tokenSecret || config.tokenSecret === 'mock-secret') reasons.push('APP_TOKEN_SECRET is missing');
   if (!config.todoImportToken) reasons.push('TODO_IMPORT_TOKEN is missing');
-  if (!config.wechat.appId) reasons.push('WECHAT_APP_ID is missing');
-  if (!config.wechat.appSecret) reasons.push('WECHAT_APP_SECRET is missing');
+  config.wechatLoginReadiness().reasons.forEach((name) => reasons.push(`${name} is missing`));
   if (!config.wechat.subscribeTemplateId && !config.subscribeTemplateIds.length) reasons.push('WECHAT_SUBSCRIBE_TEMPLATE_ID is missing');
   if (!config.wechat.templateFieldsValid) reasons.push('WECHAT_SUBSCRIBE_TEMPLATE_FIELDS is invalid');
   if (config.storage.mode === 'remote-json' && (!config.remoteState.baseUrl || !config.remoteState.token)) {

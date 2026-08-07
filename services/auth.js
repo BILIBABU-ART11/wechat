@@ -30,7 +30,7 @@ function persistSession(result) {
 
 function login() {
   return wxLogin()
-    .then((code) => request.post('/api/auth/wechat-login', { code }, { showLoading: true }))
+    .then((code) => request.post('/api/auth/wechat-login', { code }, { showLoading: true, showError: false }))
     .then((result) => {
       persistSession(result);
       return result;

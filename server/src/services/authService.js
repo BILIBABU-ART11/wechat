@@ -3,9 +3,11 @@ const config = require('../config');
 const mockStore = require('./mockStore');
 const accountStore = require('./accountStore');
 
-function createHttpError(status, message) {
+function createHttpError(status, message, errorCode, details) {
   const error = new Error(message);
   error.status = status;
+  if (errorCode) error.errorCode = errorCode;
+  if (details) error.details = details;
   return error;
 }
 
@@ -53,8 +55,14 @@ function verifyToken(token, expectedType) {
 
 async function code2Session(code) {
   if (!code) throw createHttpError(422, 'missing wx.login code');
-  if (!config.wechat.appId || !config.wechat.appSecret) {
-    throw createHttpError(500, 'WECHAT_APP_ID and WECHAT_APP_SECRET must be configured.');
+  const loginReadiness = config.wechatLoginReadiness();
+  if (!loginReadiness.ready) {
+    throw createHttpError(
+      503,
+      '微信登录配置缺失，请在服务端环境变量配置 WECHAT_APP_ID 和 WECHAT_APP_SECRET。',
+      'LOGIN_CONFIG_MISSING',
+      { missing: loginReadiness.reasons }
+    );
   }
   const url = new URL('https://api.weixin.qq.com/sns/jscode2session');
   url.searchParams.set('appid', config.wechat.appId);
@@ -68,7 +76,12 @@ async function code2Session(code) {
     const response = await fetch(url, { signal: controller.signal });
     const payload = await response.json();
     if (!response.ok || payload.errcode || !payload.openid) {
-      throw createHttpError(502, payload.errmsg || 'WeChat code2Session failed.');
+      throw createHttpError(
+        502,
+        payload.errmsg || '微信登录校验失败，请确认小程序 AppID 与后端配置一致。',
+        'WECHAT_CODE2SESSION_FAILED',
+        { wechat_errcode: payload.errcode || null }
+      );
     }
     return payload;
   } catch (error) {

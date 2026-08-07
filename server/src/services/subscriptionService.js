@@ -52,9 +52,34 @@ function trimValue(value, maxLength) {
   return text.length > maxLength ? text.slice(0, maxLength) : text;
 }
 
+function currentReminderTime() {
+  const parts = new Intl.DateTimeFormat('zh-CN', {
+    timeZone: config.reminderSchedule.timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23'
+  }).formatToParts(new Date()).reduce((result, part) => {
+    if (part.type !== 'literal') result[part.type] = part.value;
+    return result;
+  }, {});
+  return `${parts.year}年${parts.month}月${parts.day}日 ${parts.hour}:${parts.minute}:${parts.second}`;
+}
+
 function buildMessageData(payload) {
   assertWechatConfigured();
   const fields = config.wechat.templateFields;
+  if (fields.time && fields.content) {
+    const content = payload.content
+      || `${payload.userName || '您'}当前有${Math.max(0, Number(payload.pendingCount || 0))}条待办`;
+    return {
+      [fields.time]: { value: payload.reminderTime || currentReminderTime() },
+      [fields.content]: { value: trimValue(content, 20) }
+    };
+  }
   return {
     [fields.title]: { value: trimValue(payload.userName || '待办提醒', 20) },
     [fields.count]: { value: String(Math.max(0, Number(payload.pendingCount || 0))) },

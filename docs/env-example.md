@@ -25,15 +25,15 @@
 
   "WECHAT_APP_ID": "wx964c3e4ac820ac37",
   "WECHAT_APP_SECRET": "微信公众平台AppSecret",
-  "WECHAT_SUBSCRIBE_TEMPLATE_ID": "微信订阅消息模板ID",
+  "WECHAT_SUBSCRIBE_TEMPLATE_ID": "5R4eJ63vK_DNuMgeNnr4ffHxcOgRFX5c1Pz51KXeH-A",
   "WECHAT_SUBSCRIBE_TEMPLATE_PAGE": "pages/index/index",
-  "WECHAT_SUBSCRIBE_TEMPLATE_FIELDS": "{\"title\":\"thing1\",\"count\":\"number2\",\"content\":\"thing3\",\"date\":\"date4\"}",
+  "WECHAT_SUBSCRIBE_TEMPLATE_FIELDS": "{\"time\":\"time11\",\"content\":\"thing1\"}",
 
   "APP_TOKEN_SECRET": "替换为强随机业务Token密钥"
 }
 ```
 
-`WECHAT_SUBSCRIBE_TEMPLATE_FIELDS` 的值必须和微信公众平台模板详情中的字段名完全一致。
+`WECHAT_SUBSCRIBE_TEMPLATE_FIELDS` 的值必须和微信公众平台模板详情中的字段名完全一致。当前“待办事项提醒”模板使用 `time11` 和 `thing1`。
 
 ## Linux 状态服务
 

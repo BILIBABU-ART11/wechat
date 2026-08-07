@@ -18,6 +18,7 @@ app.use('/api', (req, res, next) => {
 
 app.get('/health', (req, res) => {
   const readiness = config.readiness();
+  const loginReadiness = config.wechatLoginReadiness();
   res.status(readiness.ready ? 200 : 503).json({
     code: readiness.ready ? 0 : 503,
     message: readiness.ready ? 'ok' : 'service not ready',
@@ -26,7 +27,9 @@ app.get('/health', (req, res) => {
       service_name: '院院通待办提醒服务',
       mock_mode: config.mockMode,
       ready: readiness.ready,
-      reasons: readiness.reasons
+      reasons: readiness.reasons,
+      login_ready: loginReadiness.ready,
+      login_reasons: loginReadiness.reasons
     }
   });
 });
@@ -83,11 +86,13 @@ app.use((req, res) => {
 app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
   const status = error.status || 500;
-  res.status(status).json({
+  const body = {
     code: status,
     message: error.message || 'internal server error',
-    data: null
-  });
+    data: error.details || null
+  };
+  if (error.errorCode) body.error_code = error.errorCode;
+  res.status(status).json(body);
 });
 
 module.exports = app;

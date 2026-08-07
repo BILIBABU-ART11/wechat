@@ -79,6 +79,7 @@ const config = {
     apiKey: process.env.TODO_API_KEY || '',
     timeoutMs: Number(process.env.TODO_API_TIMEOUT_MS || 10000),
     dataSource: process.env.TODO_DATA_SOURCE || 'import',
+    sampleFallbackEnabled: readBool(process.env.TODO_SAMPLE_FALLBACK_ENABLED, true),
     dataFile: process.env.TODO_DATA_FILE || path.resolve(__dirname, '..', '..', 'real-data', 'todo-snapshots-latest.json')
   },
   reminderSchedule: {

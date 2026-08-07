@@ -37,6 +37,50 @@ function normalizePageQuery(query) {
   };
 }
 
+function currentDateInTimeZone() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: config.reminderSchedule.timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(new Date());
+}
+
+function sampleResult(params) {
+  const snapshotDate = currentDateInTimeZone();
+  const userId = String(params.userId);
+  return {
+    items: [{
+      id: `sample-${snapshotDate}-${userId}`,
+      snapshotDate,
+      userId,
+      userName: '示例账号',
+      pendingCount: 3,
+      content: '示例提醒：您有 3 项招投标进度待关注'
+    }],
+    total: 1,
+    page: 1,
+    pageSize: params.pageSize,
+    source: 'sample-fallback',
+    imported_at: new Date().toISOString()
+  };
+}
+
+async function withSampleFallback(result, params) {
+  if (
+    !config.todoApi.sampleFallbackEnabled
+    || !params.userId
+    || params.page !== 1
+    || Number(result.total || 0) > 0
+  ) {
+    return result;
+  }
+  const globalResult = await importedTodoStore.listSnapshots({ page: 1, pageSize: 1 });
+  if (Number(globalResult.total || 0) > 0) return result;
+  if (params.snapshotDate && params.snapshotDate !== currentDateInTimeZone()) return result;
+  return sampleResult(params);
+}
+
 function normalizeItems(items, userId) {
   const normalized = (Array.isArray(items) ? items : []).map((item) => ({
     id: String(item.id || ''),
@@ -182,7 +226,8 @@ async function listSnapshots(query) {
   const params = normalizePageQuery(query || {});
   params.userId = query && (query.userId || query.user_id);
   if (config.todoApi.dataSource === 'import') {
-    return importedTodoStore.listSnapshots(params);
+    const result = await importedTodoStore.listSnapshots(params);
+    return withSampleFallback(result, params);
   }
   const localResult = readLocalSnapshotFile(params);
   if (localResult) return localResult;

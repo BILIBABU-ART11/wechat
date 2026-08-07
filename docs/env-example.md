@@ -11,6 +11,7 @@
   "ENABLE_EGRESS_IP_CHECK": "false",
 
   "TODO_DATA_SOURCE": "import",
+  "TODO_SAMPLE_FALLBACK_ENABLED": "true",
   "TODO_IMPORT_TOKEN": "替换为强随机导入密钥",
 
   "STORAGE_MODE": "remote-json",
@@ -37,6 +38,8 @@
 `WECHAT_SUBSCRIBE_TEMPLATE_FIELDS` 的值必须和微信公众平台模板详情中的字段名完全一致。当前“待办事项提醒”模板使用 `time11` 和 `thing1`。
 
 微信云托管会把 `api.weixin.qq.com` 解析到开放接口服务的私有链路，因此云端使用 `http://api.weixin.qq.com`；本地开发保持默认 HTTPS。
+
+`TODO_SAMPLE_FALLBACK_ENABLED=true` 时，如果系统尚未导入任何正式待办，登录用户会看到一条明确标注为“示例”的占位提醒。阿里云成功导入第一批正式数据后，占位提醒会自动消失；正式上线后也可以将该变量改为 `false`。
 
 ## Linux 状态服务
 

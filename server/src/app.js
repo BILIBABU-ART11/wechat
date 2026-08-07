@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const dns = require('dns').promises;
+const tls = require('tls');
 const config = require('./config');
 const routes = require('./routes');
 
@@ -77,6 +79,58 @@ app.get('/health/egress-ip', async (req, res) => {
     message: 'egress ip check failed',
     data: { attempts, checked_at: new Date().toISOString() }
   });
+});
+
+app.get('/health/wechat-tls', async (req, res) => {
+  if (!config.enableEgressIpCheck) {
+    res.status(404).json({ code: 404, message: 'endpoint not found', data: null });
+    return;
+  }
+  try {
+    const addresses = await dns.lookup('api.weixin.qq.com', { all: true });
+    const result = await new Promise((resolve, reject) => {
+      const socket = tls.connect({
+        host: 'api.weixin.qq.com',
+        port: 443,
+        servername: 'api.weixin.qq.com',
+        rejectUnauthorized: false,
+        timeout: 5000
+      });
+      socket.once('secureConnect', () => {
+        const certificate = socket.getPeerCertificate();
+        resolve({
+          authorized: socket.authorized,
+          authorization_error: socket.authorizationError || null,
+          protocol: socket.getProtocol(),
+          remote_address: socket.remoteAddress,
+          certificate: {
+            subject_cn: certificate.subject && certificate.subject.CN,
+            issuer_cn: certificate.issuer && certificate.issuer.CN,
+            valid_from: certificate.valid_from,
+            valid_to: certificate.valid_to,
+            fingerprint256: certificate.fingerprint256
+          }
+        });
+        socket.end();
+      });
+      socket.once('timeout', () => socket.destroy(new Error('TLS probe timed out')));
+      socket.once('error', reject);
+    });
+    res.json({
+      code: 0,
+      message: 'ok',
+      data: Object.assign({
+        host: 'api.weixin.qq.com',
+        addresses: addresses.map((item) => ({ address: item.address, family: item.family }))
+      }, result)
+    });
+  } catch (error) {
+    res.status(502).json({
+      code: 502,
+      message: 'WeChat TLS probe failed',
+      data: { network_code: (error && error.code) || null }
+    });
+  }
 });
 
 app.use('/api', routes);

@@ -29,6 +29,14 @@ function readJsonObject(value) {
   }
 }
 
+function readWechatApiBaseUrl(value) {
+  const url = new URL(value || 'https://api.weixin.qq.com');
+  if (url.hostname !== 'api.weixin.qq.com' || !['http:', 'https:'].includes(url.protocol)) {
+    throw new Error('WECHAT_API_BASE_URL must use http(s)://api.weixin.qq.com.');
+  }
+  return url.origin;
+}
+
 function validateTemplateFields(fields) {
   const required = ['title', 'count', 'content', 'date'];
   const pattern = /^(thing|number|date|time|character_string)\d+$/;
@@ -82,6 +90,7 @@ const config = {
     timeZone: reminderTimeZone
   },
   wechat: {
+    apiBaseUrl: readWechatApiBaseUrl(process.env.WECHAT_API_BASE_URL),
     appId: process.env.WECHAT_APP_ID || '',
     appSecret: process.env.WECHAT_APP_SECRET || '',
     subscribeTemplateId: process.env.WECHAT_SUBSCRIBE_TEMPLATE_ID || '',

@@ -26,7 +26,7 @@ function assertWechatConfigured() {
 async function getAccessToken() {
   assertWechatConfigured();
   if (cachedAccessToken && Date.now() < cachedAccessTokenExpiresAt) return cachedAccessToken;
-  const url = new URL('https://api.weixin.qq.com/cgi-bin/token');
+  const url = new URL('/cgi-bin/token', config.wechat.apiBaseUrl);
   url.searchParams.set('grant_type', 'client_credential');
   url.searchParams.set('appid', config.wechat.appId);
   url.searchParams.set('secret', config.wechat.appSecret);
@@ -105,7 +105,7 @@ async function sendSubscribeMessage(payload) {
   }
   assertWechatConfigured();
   const accessToken = await getAccessToken();
-  const url = new URL('https://api.weixin.qq.com/cgi-bin/message/subscribe/send');
+  const url = new URL('/cgi-bin/message/subscribe/send', config.wechat.apiBaseUrl);
   url.searchParams.set('access_token', accessToken);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), config.todoApi.timeoutMs);

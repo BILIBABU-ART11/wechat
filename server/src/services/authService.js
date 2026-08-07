@@ -71,7 +71,7 @@ async function code2Session(code) {
       { missing: loginReadiness.reasons }
     );
   }
-  const url = new URL('https://api.weixin.qq.com/sns/jscode2session');
+  const url = new URL('/sns/jscode2session', config.wechat.apiBaseUrl);
   url.searchParams.set('appid', config.wechat.appId);
   url.searchParams.set('secret', config.wechat.appSecret);
   url.searchParams.set('js_code', code);

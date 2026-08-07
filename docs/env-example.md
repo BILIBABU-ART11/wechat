@@ -25,6 +25,7 @@
 
   "WECHAT_APP_ID": "wx964c3e4ac820ac37",
   "WECHAT_APP_SECRET": "微信公众平台AppSecret",
+  "WECHAT_API_BASE_URL": "http://api.weixin.qq.com",
   "WECHAT_SUBSCRIBE_TEMPLATE_ID": "5R4eJ63vK_DNuMgeNnr4ffHxcOgRFX5c1Pz51KXeH-A",
   "WECHAT_SUBSCRIBE_TEMPLATE_PAGE": "pages/index/index",
   "WECHAT_SUBSCRIBE_TEMPLATE_FIELDS": "{\"time\":\"time11\",\"content\":\"thing1\"}",
@@ -34,6 +35,8 @@
 ```
 
 `WECHAT_SUBSCRIBE_TEMPLATE_FIELDS` 的值必须和微信公众平台模板详情中的字段名完全一致。当前“待办事项提醒”模板使用 `time11` 和 `thing1`。
+
+微信云托管会把 `api.weixin.qq.com` 解析到开放接口服务的私有链路，因此云端使用 `http://api.weixin.qq.com`；本地开发保持默认 HTTPS。
 
 ## Linux 状态服务
 

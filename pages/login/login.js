@@ -7,6 +7,9 @@ function getLoginFailureMessage(error) {
   if (error && error.errorCode === 'WECHAT_CODE2SESSION_FAILED') {
     return '微信登录校验失败，请确认小程序 AppID 与后端配置一致。';
   }
+  if (error && error.errorCode === 'WECHAT_API_UNREACHABLE') {
+    return '后端无法连接微信登录服务，请联系管理员检查云托管网络。';
+  }
   if (error && error.statusCode === 500) return '服务内部异常，请联系管理员查看后端日志。';
   if (error && error.statusCode === 502) return '微信登录接口暂时不可用，请稍后重试。';
   if (error && error.statusCode === 503) return '提醒服务暂不可用，请稍后重试。';

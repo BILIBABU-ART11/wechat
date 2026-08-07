@@ -11,6 +11,13 @@ function createHttpError(status, message, errorCode, details) {
   return error;
 }
 
+function networkErrorCode(error) {
+  if (error && error.cause && error.cause.code) return error.cause.code;
+  const nested = error && error.cause && error.cause.errors;
+  const coded = Array.isArray(nested) && nested.find((item) => item && item.code);
+  return coded ? coded.code : null;
+}
+
 function base64url(value) {
   return Buffer.from(JSON.stringify(value)).toString('base64url');
 }
@@ -86,7 +93,13 @@ async function code2Session(code) {
     return payload;
   } catch (error) {
     if (error.name === 'AbortError') throw createHttpError(504, 'WeChat login request timed out.');
-    throw error;
+    if (error.status) throw error;
+    throw createHttpError(
+      502,
+      '无法连接微信登录服务，请检查云托管出网配置。',
+      'WECHAT_API_UNREACHABLE',
+      { network_code: networkErrorCode(error) }
+    );
   } finally {
     clearTimeout(timeout);
   }

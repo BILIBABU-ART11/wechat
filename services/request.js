@@ -31,6 +31,9 @@ function normalizeHttpErrorMessage(statusCode, body) {
   if (errorCode === 'WECHAT_CODE2SESSION_FAILED') {
     return '微信登录校验失败，请确认小程序配置';
   }
+  if (errorCode === 'WECHAT_API_UNREACHABLE') {
+    return '后端无法连接微信登录服务，请联系管理员';
+  }
   if (statusCode === 500) return '服务内部异常，请联系管理员';
   if (statusCode === 502) return '上游服务调用失败，请稍后重试';
   if (statusCode === 503) return '服务暂不可用，请稍后重试';

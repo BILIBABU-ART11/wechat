@@ -55,8 +55,60 @@
         "type": "file"
       },
       {
-        "type": "folder",
-        "value": "/minitest"
+        "value": "minitest",
+        "type": "folder"
+      },
+      {
+        "value": "dist",
+        "type": "folder"
+      },
+      {
+        "value": "deploy",
+        "type": "folder"
+      },
+      {
+        "value": "node_modules",
+        "type": "folder"
+      },
+      {
+        "value": "real-data",
+        "type": "folder"
+      },
+      {
+        "value": ".git",
+        "type": "folder"
+      },
+      {
+        "value": "Dockerfile",
+        "type": "file"
+      },
+      {
+        "value": "container.config.json",
+        "type": "file"
+      },
+      {
+        "value": "package.json",
+        "type": "file"
+      },
+      {
+        "value": "package-lock.json",
+        "type": "file"
+      },
+      {
+        "value": "index.js",
+        "type": "file"
+      },
+      {
+        "value": "TASK_PLAN.md",
+        "type": "file"
+      },
+      {
+        "value": ".dockerignore",
+        "type": "file"
+      },
+      {
+        "value": ".gitattributes",
+        "type": "file"
       }
     ],
     "include": []

@@ -1,3 +1,12 @@
+# Project README Documentation
+
+- [x] Audit the implemented architecture, runtime configuration, APIs, and deployment scripts.
+- [x] Rewrite the root README in Chinese without embedding production secrets.
+- [x] Document development, Tencent CloudRun, Aliyun synchronization, release, and troubleshooting workflows.
+- [x] Validate all documented paths, commands, environment variables, and links against the repository.
+- [x] Re-run the README validator with shell-safe Markdown fence detection after a PowerShell quoting failure.
+- [x] Run documentation checks and mark the documentation task complete.
+
 # Mini Program CloudRun Access
 
 - [x] Add request tests for the CloudRun environment, service, path, and login token.

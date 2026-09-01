@@ -45,7 +45,9 @@ REMINDER_SCHEDULE_ENABLED=false
 npm run preflight
 ```
 
-还需要在微信公众平台把云托管 HTTPS 地址加入 request 合法域名。Linux 状态服务域名不放入小程序合法域名，因为小程序不会直接访问它。
+小程序前端通过 `wx.cloud.callContainer` 访问云托管，环境 ID 为 `prod-d5g6lfndn063b2d5d`，服务名称为 `express-0kx6`。不需要把云托管默认测试域名加入微信公众平台 request 合法域名。
+
+云托管公网地址只供 Linux 同步脚本调用 `/api/todo-stat/import`。Linux 状态服务地址也不放入小程序合法域名，因为小程序不会直接访问它。
 
 ## 健康检查
 

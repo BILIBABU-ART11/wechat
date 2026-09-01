@@ -4,7 +4,7 @@
 - [x] Initialize `wx.cloud` with `prod-d5g6lfndn063b2d5d` during application launch.
 - [x] Route frontend backend calls through `wx.cloud.callContainer` instead of `wx.request`.
 - [x] Pass frontend, backend, and deployment preflight regression checks.
-- [ ] Commit and push the verified change to GitHub `master`.
+- [x] Commit and push the verified change to GitHub `master`.
 
 # 微信登录云端修复
 

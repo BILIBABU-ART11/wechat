@@ -6,6 +6,7 @@
 - [x] Validate all documented paths, commands, environment variables, and links against the repository.
 - [x] Re-run the README validator with shell-safe Markdown fence detection after a PowerShell quoting failure.
 - [x] Run documentation checks and mark the documentation task complete.
+- [x] Retry the GitHub push after a transient connection reset.
 
 # Mini Program CloudRun Access
 

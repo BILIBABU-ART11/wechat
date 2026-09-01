@@ -4,7 +4,8 @@ const {
   MOCK_ENABLED,
   REQUEST_MODE,
   ENABLE_MOCK_FALLBACK,
-  API_BASE_URL
+  CLOUD_ENV_ID,
+  CLOUD_SERVICE_NAME
 } = require('../utils/constants');
 
 function showError(message) {
@@ -66,16 +67,20 @@ function requestMock(config) {
 }
 
 function requestBackend(config) {
-  if (typeof wx === 'undefined' || !wx.request) {
-    return Promise.reject(new Error('当前运行环境不支持 wx.request'));
+  if (typeof wx === 'undefined' || !wx.cloud || !wx.cloud.callContainer) {
+    return Promise.reject(new Error('WeChat CloudRun is unavailable'));
   }
   return new Promise((resolve, reject) => {
     const token = storage.getToken();
-    wx.request({
-      url: `${API_BASE_URL}${config.url}`,
+    wx.cloud.callContainer({
+      config: {
+        env: CLOUD_ENV_ID
+      },
+      path: config.url,
       method: config.method,
       data: config.data,
       header: Object.assign({
+        'X-WX-SERVICE': CLOUD_SERVICE_NAME,
         'content-type': 'application/json',
         'Cache-Control': 'no-store',
         Pragma: 'no-cache'

@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "cd server && npm test",
+    "test": "npm run test:miniprogram && cd server && npm test",
+    "test:miniprogram": "node minitest/cloud-container-request.test.js",
     "preflight": "node scripts/validate-deploy-config.js"
   },
   "engines": {

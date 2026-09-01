@@ -30,19 +30,16 @@ const STATUS_VALUES = {
   ignored: 'ignored'
 };
 
-const API_ENV = 'cloud';
-const API_BASE_URLS = {
-  local: 'http://192.168.0.77:3000',
-  cloud: 'https://express-0kx6-284420-7-1455148284.sh.run.tcloudbase.com'
-};
+const CLOUD_ENV_ID = 'prod-d5g6lfndn063b2d5d';
+const CLOUD_SERVICE_NAME = 'express-0kx6';
 
 module.exports = {
   APP_NAME: '院院通',
   REQUEST_MODE: 'backend',
   MOCK_ENABLED: false,
   ENABLE_MOCK_FALLBACK: false,
-  API_ENV,
-  API_BASE_URL: API_BASE_URLS[API_ENV],
+  CLOUD_ENV_ID,
+  CLOUD_SERVICE_NAME,
   REQUIRE_BIND_ON_LAUNCH: false,
   TOKEN_KEY: 'yuanyuantong_token',
   USER_KEY: 'yuanyuantong_user',

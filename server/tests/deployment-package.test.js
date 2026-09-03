@@ -13,6 +13,7 @@ function run() {
     'deploy/aliyun-test/install.sh',
     'deploy/aliyun-test/update.sh',
     'deploy/aliyun-test/diagnose.sh',
+    'deploy/aliyun-test/enable-cloud-http.sh',
     'deploy/aliyun-test/uninstall.sh',
     'deploy/aliyun-test/runtime-package.json',
     'deploy/aliyun-test/runtime-package-lock.json',
@@ -30,6 +31,15 @@ function run() {
   assert.match(installer, /TRIGGER_REMINDERS=false/);
   assert.match(installer, /REMOTE_STATE_HOST=127\.0\.0\.1/);
   assert.doesNotMatch(installer, /REMOTE_STATE_HOST=0\.0\.0\.0/);
+
+  const cloudActivator = read('deploy/aliyun-test/enable-cloud-http.sh');
+  assert.match(cloudActivator, /REMOTE_STATE_HOST.*0\.0\.0\.0/);
+  assert.match(cloudActivator, /REMOTE_STATE_PORT.*3100/);
+  assert.match(cloudActivator, /CLOUD_TRIGGER_ENABLED.*true/);
+  assert.match(cloudActivator, /TRIGGER_REMINDERS.*true/);
+  assert.match(cloudActivator, /yyt-cloudrun-env\.json/);
+  assert.match(cloudActivator, /chmod 0600/);
+  assert.doesNotMatch(cloudActivator, /REMOTE_STATE_TOKEN=[a-zA-Z0-9_-]{20,}/);
 
   const stateUnit = read('deploy/aliyun-test/systemd/yyt-remote-state.service');
   assert.match(stateUnit, /NoNewPrivileges=true/);

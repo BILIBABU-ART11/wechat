@@ -1,5 +1,6 @@
 const assert = require('assert');
 process.env.MOCK_MODE = 'true';
+process.env.TODO_DATA_SOURCE = 'import';
 process.env.TODO_IMPORT_TOKEN = 'test-import-token';
 process.env.WECHAT_SUBSCRIBE_TEMPLATE_ID = 'test-template-id';
 process.env.WECHAT_SUBSCRIBE_TEMPLATE_FIELDS = '{"title":"thing1","count":"number2","content":"thing3","date":"date4"}';
@@ -36,6 +37,14 @@ async function run() {
   const server = app.listen(0);
   const baseUrl = `http://127.0.0.1:${server.address().port}/api`;
   try {
+    const healthResponse = await fetch(baseUrl.replace(/\/api$/, '') + '/health');
+    const health = await healthResponse.json();
+    assert.strictEqual(healthResponse.status, 200);
+    assert.strictEqual(health.data.runtime.storage_mode, 'memory');
+    assert.strictEqual(health.data.runtime.todo_data_source, 'import');
+    assert.strictEqual(health.data.runtime.remote_state_configured, false);
+    assert.strictEqual(health.data.runtime.reminder_schedule_enabled, true);
+
     const login = await request(baseUrl, 'POST', '/auth/wechat-login', { code: 'demo-code' });
     assert.strictEqual(login.need_bind, true);
 

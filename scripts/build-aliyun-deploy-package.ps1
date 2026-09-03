@@ -34,7 +34,7 @@ New-Item -ItemType Directory -Path $stageRoot -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $stageRoot "app\scripts") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $stageRoot "systemd") -Force | Out-Null
 
-foreach ($file in @("README.md", "install.sh", "update.sh", "diagnose.sh", "uninstall.sh")) {
+foreach ($file in @("README.md", "install.sh", "update.sh", "diagnose.sh", "enable-cloud-http.sh", "uninstall.sh")) {
   [System.IO.File]::Copy(
     (Join-Path $sourceRoot $file),
     (Join-Path $stageRoot $file),

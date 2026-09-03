@@ -52,3 +52,18 @@
 - [x] 生成可直接上传的 tar.gz 压缩包。
 - [x] 完成自动测试、Linux 脚本格式检查和压缩包校验。
 - [ ] 提交并推送 GitHub。
+
+# Subscription Reminder Delivery Investigation
+
+- [x] Trace subscription authorization from the mini program to persisted state.
+  Acceptance: an accepted template grant is stored against the authenticated user and survives a state-service restart.
+- [x] Trace a new todo batch from the Aliyun state service through the CloudRun reminder trigger.
+  Acceptance: a unique unprocessed batch reaches the reminder job exactly once.
+- [x] Verify recipient matching, template payload construction, and WeChat API error handling.
+  Acceptance: a bound user with pending work and one grant produces one valid send request, while failures remain diagnosable.
+- [x] Add regression tests before changing reminder behavior.
+  Acceptance: tests reproduce every confirmed defect before its fix.
+- [x] Implement confirmed fixes and improve delivery diagnostics.
+  Acceptance: subscription, import, send, and failure status can be distinguished from API responses and logs.
+- [x] Run the complete backend and deployment validation suites.
+  Acceptance: all relevant tests and validation commands pass.

@@ -31,7 +31,15 @@ app.get('/health', (req, res) => {
       ready: readiness.ready,
       reasons: readiness.reasons,
       login_ready: loginReadiness.ready,
-      login_reasons: loginReadiness.reasons
+      login_reasons: loginReadiness.reasons,
+      runtime: {
+        storage_mode: config.storage.mode || (config.mysql.host ? 'mysql' : 'memory'),
+        todo_data_source: config.todoApi.dataSource,
+        remote_state_configured: config.storage.mode === 'remote-json'
+          && Boolean(config.remoteState.baseUrl && config.remoteState.token),
+        reminder_schedule_enabled: config.reminderSchedule.enabled,
+        subscription_template_configured: Boolean(config.wechat.subscribeTemplateId || config.subscribeTemplateIds.length)
+      }
     }
   });
 });

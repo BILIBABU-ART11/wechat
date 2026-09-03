@@ -76,6 +76,33 @@ sudo bash uninstall.sh
 sudo bash uninstall.sh --purge
 ```
 
+## 临时接通腾讯云和微信提醒
+
+安装包默认只拉取数据，不会调用腾讯云或发送微信消息。无域名测试阶段可显式启用公网 IP + HTTP 联调：
+
+```bash
+sudo bash enable-cloud-http.sh --public-ip 120.26.231.85
+```
+
+脚本会：
+
+- 把状态服务改为监听 `0.0.0.0:3100`；
+- 开启云托管触发和提醒触发；
+- 在 `/root/yyt-cloudrun-env.json` 生成权限为 `600` 的腾讯云环境变量片段；
+- 重启并检查状态服务，但默认不会立即同步或消耗订阅次数。
+
+之后必须完成：
+
+1. 在阿里云安全组开放入方向 TCP `3100`。
+2. 将 `/root/yyt-cloudrun-env.json` 的字段合并到腾讯云托管环境变量并重新部署。
+3. 确认云托管 `/health` 中 `storage_mode` 为 `remote-json`。
+4. 手动触发一次真实联调：
+
+```bash
+sudo bash enable-cloud-http.sh --public-ip 120.26.231.85 --run-now
+```
+
+公网 HTTP 不加密 Token 和业务数据，只能用于短期、受控测试。正式使用应改为 HTTPS 或私网链路。
 ## 后续切换完整模式
 
 取得已备案域名和 HTTPS 后，再完成以下操作：

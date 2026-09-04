@@ -2,6 +2,7 @@
   "pages": [
     "pages/login/login",
     "pages/bind/bind",
+    "pages/subscribe/subscribe",
     "pages/index/index",
     "pages/detail/detail",
     "pages/profile/profile"

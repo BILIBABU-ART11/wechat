@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "node tests/auth-login-config.test.js && node tests/auth-wechat-network.test.js && node tests/auth-wechat-base-url.test.js && node tests/subscription-template-fields.test.js && node tests/todo-sample-fallback.test.js && node tests/api.test.js && node tests/cos-json-state.test.js && node tests/remote-json-state.test.js && node tests/stability.test.js && node tests/sync-script.test.js && node tests/local-sync-mode.test.js && node tests/deployment-package.test.js",
+    "test": "node tests/auth-login-config.test.js && node tests/auth-wechat-network.test.js && node tests/auth-wechat-base-url.test.js && node tests/subscription-template-fields.test.js && node tests/subscription-grants.test.js && node tests/todo-sample-fallback.test.js && node tests/api.test.js && node tests/cos-json-state.test.js && node tests/remote-json-state.test.js && node tests/stability.test.js && node tests/sync-script.test.js && node tests/local-sync-mode.test.js && node tests/deployment-package.test.js",
     "smoke": "node tests/api.test.js"
   },
   "dependencies": {

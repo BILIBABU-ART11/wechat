@@ -29,7 +29,7 @@ const requiredFiles = [
   'server/tests/api.test.js'
 ];
 
-const pages = ['login', 'bind', 'index', 'list', 'detail', 'messages', 'profile'];
+const pages = ['login', 'bind', 'subscribe', 'index', 'list', 'detail', 'messages', 'profile'];
 const components = ['article-card', 'status-tag', 'score-badge', 'empty-state', 'loading-state'];
 
 for (const page of pages) {

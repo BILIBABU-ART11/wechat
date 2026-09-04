@@ -1,6 +1,5 @@
 const auth = require('../../services/auth');
 const api = require('../../services/api');
-const permission = require('../../utils/permission');
 const storage = require('../../utils/storage');
 const authGuard = require('../../utils/authGuard');
 const { ROLE_LABELS } = require('../../utils/constants');
@@ -60,18 +59,7 @@ Page({
 
   subscribeReminder() {
     if (!authGuard.requireLogin()) return;
-    api.getSubscribeConfig()
-      .then((config) => permission.requestReminderSubscribe(config))
-      .then((result) => api.subscribeReminder(result))
-      .then((state) => {
-        storage.setSubscribeState(state);
-        this.setData({ subscribeState: state });
-        wx.showToast({ title: state.enabled ? '订阅已开启' : '订阅未开启', icon: 'none' });
-        this.refreshRemoteState();
-      })
-      .catch((error) => {
-        wx.showToast({ title: error.message || '订阅失败', icon: 'none' });
-      });
+    wx.navigateTo({ url: '/pages/subscribe/subscribe' });
   },
 
   logout() {

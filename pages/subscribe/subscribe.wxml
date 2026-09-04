@@ -1,0 +1,33 @@
+<view class="subscribe-page page">
+  <view class="subscribe-head">
+    <view class="subscribe-kicker">提醒设置</view>
+    <view class="subscribe-title">储备提醒次数</view>
+    <view class="subscribe-desc">短期测试目标为 10 次，可用于约 5 天的每日两次提醒。</view>
+  </view>
+
+  <view class="progress-card card">
+    <view class="progress-top">
+      <view class="progress-label">当前可用</view>
+      <view class="progress-count">
+        <text class="progress-current">{{remainingCount}}</text>
+        <text class="progress-target"> / {{targetCount}}</text>
+      </view>
+    </view>
+    <view class="progress-track">
+      <view class="progress-fill" style="width: {{progressPercent}}%;"></view>
+    </view>
+    <view class="progress-status">{{completed ? '提醒次数已储备完成' : '每次点击增加 1 次提醒授权'}}</view>
+  </view>
+
+  <button
+    wx:if="{{!completed}}"
+    class="primary-button action-button"
+    loading="{{loading}}"
+    disabled="{{loading}}"
+    bindtap="grantOne"
+  >{{ready ? '储备 1 次提醒' : '重新加载授权'}}</button>
+  <button wx:else class="primary-button action-button" bindtap="finish">进入首页</button>
+  <button wx:if="{{!completed}}" class="secondary-button skip-button" bindtap="skip">稍后再说</button>
+
+  <view class="privacy-note">微信未返回“允许”时不会增加次数。提醒仅显示待办提示，不包含敏感详情。</view>
+</view>

@@ -67,3 +67,16 @@
   Acceptance: subscription, import, send, and failure status can be distinguished from API responses and logs.
 - [x] Run the complete backend and deployment validation suites.
   Acceptance: all relevant tests and validation commands pass.
+
+# Ten-Grant Subscription Onboarding
+
+- [x] Add mini-program tests for the ten-grant onboarding flow.
+  Acceptance: tests require a post-bind redirect, one subscription request per tap, progress capped at 10, and a skip path.
+- [x] Add the subscription onboarding page and route.
+  Acceptance: newly bound users see 0/10 progress, can grant one reminder per tap, and can enter the home page at any time.
+- [x] Reuse the onboarding flow from the profile page.
+  Acceptance: users can replenish grants without creating a second subscription implementation.
+- [x] Keep server-side grant accounting authoritative.
+  Acceptance: progress refreshes from /api/user/me after each accepted grant and never increments only from local UI state.
+- [x] Run full mini-program, backend, structure, and deployment validations.
+  Acceptance: all automated checks pass and no secrets or build artifacts are added to Git.

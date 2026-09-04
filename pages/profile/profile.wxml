@@ -16,6 +16,6 @@
     <view class="info-row"><text class="info-label">最近发送</text><text class="info-value">{{lastSendText}}</text></view>
   </view>
 
-  <button class="primary-button profile-button" bindtap="subscribeReminder">订阅提醒</button>
+  <button class="primary-button profile-button" bindtap="subscribeReminder">补充提醒次数</button>
   <button class="danger-button profile-button" bindtap="logout">退出登录</button>
 </view>

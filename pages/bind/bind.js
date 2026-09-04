@@ -26,7 +26,7 @@ Page({
       .then((result) => {
         getApp().globalData.user = result.user;
         wx.showToast({ title: '绑定成功', icon: 'success' });
-        wx.switchTab({ url: '/pages/index/index' });
+        wx.redirectTo({ url: '/pages/subscribe/subscribe' });
       })
       .catch((error) => {
         wx.showToast({ title: error.message || '绑定失败', icon: 'none' });

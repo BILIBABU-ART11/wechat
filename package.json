@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node index.js",
     "test": "npm run test:miniprogram && cd server && npm test",
-    "test:miniprogram": "node minitest/cloud-container-request.test.js",
+    "test:miniprogram": "node minitest/cloud-container-request.test.js && node minitest/subscription-onboarding.test.js",
     "preflight": "node scripts/validate-deploy-config.js"
   },
   "engines": {
